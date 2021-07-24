@@ -1,15 +1,20 @@
 {
-    "name": "telegram-bot/example-bot",
+    "name": "abysim/telegram-bot",
     "type": "project",
-    "description": "PHP Telegram Bot Example",
-    "keywords": ["telegram", "bot", "example"],
+    "description": "Personal bot with fishing game, MagaHAL-like AI, some admin functionality.",
+    "keywords": ["telegram", "bot", "megahal", "fishing", "game", "admin"],
     "license": "MIT",
-    "homepage": "https://github.com/php-telegram-bot/example-bot",
+    "homepage": "https://github.com/abysim/telegram-bot",
     "support": {
-        "issues": "https://github.com/php-telegram-bot/example-bot/issues",
-        "source": "https://github.com/php-telegram-bot/example-bot"
+        "issues": "https://github.com/abysim/telegram-bot/issues",
+        "source": "https://github.com/abysim/telegram-bot"
     },
     "authors": [
+        {
+            "name": "Abysim",
+            "homepage": "https://abysim.com/",
+            "role": "Developer"
+        },
         {
             "name": "PHP Telegram Bot Team",
             "homepage": "https://github.com/php-telegram-bot/example-bot/graphs/contributors",
@@ -17,7 +22,12 @@
         }
     ],
     "require": {
-        "longman/telegram-bot": "*"
+        "longman/telegram-bot": "^0.73.1",
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "monolog/monolog": "^2.2",
+        "cijic/phpmorphy": "^0.3.1"
     },
     "require-dev": {
         "php-parallel-lint/php-parallel-lint": "^1.2",

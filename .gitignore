@@ -1,4 +1,10 @@
 composer.phar
 composer.lock
 config.php
+fishing_config.php
+chatter_config.php
 vendor
+temp
+/index.html
+/robots.txt
+.idea

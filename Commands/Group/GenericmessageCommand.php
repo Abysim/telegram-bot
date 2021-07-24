@@ -52,30 +52,67 @@ class GenericmessageCommand extends SystemCommand
     {
         $message = $this->getMessage();
 
+        $proxyConfig = $this->getConfig('proxy');
+        if (isset($proxyConfig[$message->getChat()->getId()])) {
+            $config = $proxyConfig[$message->getChat()->getId()];
+            $data = ['chat_id' => $config['admin_id']];
+
+            if ($message->getNewChatMembers()) {
+                $username = $message->getFrom()->getUsername();
+                if (empty($username)) {
+                    $data['parse_mode'] = 'HTML';
+                    $fullName = trim($message->getFrom()->getFirstName() . ' ' .$message->getFrom()->getLastName());
+                    $username = "<a href=\"tg://user?id={$message->getFrom()->getId()}\">$fullName</a>";
+                } else {
+                    $username = '@' . $username;
+                }
+
+                $data['text'] = 'Новий член ' . $config['name'] . ': ' . $username;
+
+                Request::sendMessage($data);
+            } else {
+                $data['from_chat_id'] = $message->getChat()->getId();
+                $data['message_id'] = $message->getMessageId();
+
+                Request::forwardMessage($data);
+            }
+
+            return Request::deleteMessage([
+                'chat_id' => $message->getChat()->getId() ,
+                'message_id' => $message->getMessageId(),
+            ]);
+        }
+
         // Handle new chat members
         if ($message->getNewChatMembers()) {
-            return $this->getTelegram()->executeCommand('newchatmembers');
+            //return $this->getTelegram()->executeCommand('newchatmembers');
+            return Request::emptyResponse();
         }
 
         // Handle left chat members
         if ($message->getLeftChatMember()) {
-            return $this->getTelegram()->executeCommand('leftchatmember');
+            //return $this->getTelegram()->executeCommand('leftchatmember');
+            return Request::emptyResponse();
         }
 
         // The chat photo was changed
         if ($new_chat_photo = $message->getNewChatPhoto()) {
-            // Whatever...
+            return Request::emptyResponse();
         }
 
         // The chat title was changed
         if ($new_chat_title = $message->getNewChatTitle()) {
-            // Whatever...
+            return Request::emptyResponse();
         }
 
         // A message has been pinned
         if ($pinned_message = $message->getPinnedMessage()) {
-            // Whatever...
+            return Request::emptyResponse();
         }
+
+        $this->getTelegram()->executeCommand('fishing');
+
+        $this->getTelegram()->executeCommand('chatter');
 
         return Request::emptyResponse();
     }

@@ -29,9 +29,10 @@ try {
      * REMEMBER to define the URL to your hook.php file in:
      * config.php: ['webhook']['url'] => 'https://your-domain/path/to/hook.php'
      */
+    $allowed_updates = Longman\TelegramBot\Entities\Update::getUpdateTypes();
 
     // Set the webhook
-    $result = $telegram->setWebhook($config['webhook']['url']);
+    $result = $telegram->setWebhook($config['webhook']['url'], ['allowed_updates' => $allowed_updates]);
 
     // To use a self-signed certificate, use this line instead
     // $result = $telegram->setWebhook($config['webhook']['url'], ['certificate' => $config['webhook']['certificate']]);
