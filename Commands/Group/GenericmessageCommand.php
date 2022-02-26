@@ -55,29 +55,38 @@ class GenericmessageCommand extends SystemCommand
         $proxyConfig = $this->getConfig('proxy');
         if (isset($proxyConfig[$message->getChat()->getId()])) {
             $config = $proxyConfig[$message->getChat()->getId()];
-            $data = ['chat_id' => $config['admin_id']];
 
             if ($message->getNewChatMembers()) {
-                $username = $message->getFrom()->getUsername();
-                if (empty($username)) {
-                    $data['parse_mode'] = 'HTML';
-                    $fullName = trim($message->getFrom()->getFirstName() . ' ' .$message->getFrom()->getLastName());
-                    $username = "<a href=\"tg://user?id={$message->getFrom()->getId()}\">$fullName</a>";
-                } else {
-                    $username = '@' . $username;
+                if (!is_array($config['admin_id'])) {
+                    $data = ['chat_id' => $config['admin_id']];
+                    $username = $message->getFrom()->getUsername();
+                    if (empty($username)) {
+                        $data['parse_mode'] = 'HTML';
+                        $fullName =
+                            trim($message->getFrom()->getFirstName() . ' ' . $message->getFrom()->getLastName());
+                        $username = "<a href=\"tg://user?id={$message->getFrom()->getId()}\">$fullName</a>";
+                    } else {
+                        $username = '@' . $username;
+                    }
+
+                    $data['text'] = 'Новий член ' . $config['name'] . ': ' . $username;
+
+                    Request::sendMessage($data);
                 }
-
-                $data['text'] = 'Новий член ' . $config['name'] . ': ' . $username;
-
-                Request::sendMessage($data);
             } else {
-                $data['from_chat_id'] = $message->getChat()->getId();
-                $data['message_id'] = $message->getMessageId();
+                $adminIds = is_array($config['admin_id']) ? $config['admin_id'] : [$config['admin_id']];
 
-                Request::forwardMessage($data);
+                foreach ($adminIds as $adminId) {
+                    $data = ['chat_id' => $adminId];
+                    $data['from_chat_id'] = $message->getChat()->getId();
+                    $data['message_id'] = $message->getMessageId();
+
+                    Request::forwardMessage($data);
+                }
             }
 
-            return Request::deleteMessage([
+
+            return is_array($config['admin_id']) ? Request::emptyResponse() : Request::deleteMessage([
                 'chat_id' => $message->getChat()->getId() ,
                 'message_id' => $message->getMessageId(),
             ]);
