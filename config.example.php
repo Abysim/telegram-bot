@@ -40,11 +40,24 @@ return [
         ],
         // Here you can set any command-specific parameters
         'configs' => [
+            'chatjoinrequest' => [
+                ''/*chat_id*/ => [
+                    'admin_id' => '', // admins chat ID
+                    'link' => 'https://t.me/+', // the main link to the chat without admins approve
+                    'text' => '', // welcome text send to private
+                ],
+            ],
             'genericmessage' => [
                 'proxy' => [
                     ''/*chat_id*/ => [
-                        'name' => '',
-                        'admin_id' => '',
+                        'name' => '', // name of the chat to navigate from admins notification
+                        'admin_id' => '', // admins chat ID or array with IDs of target chats
+                        'new_member' => 1, // flag to forward messages about joining members
+                    ],
+                ],
+                'joinrequest' => [
+                    ''/*chat_id*/ => [
+                        'admin_id' => '', // admins chat ID
                     ],
                 ],
             ],
@@ -102,6 +115,7 @@ return [
                     'shipping_query',
                     'telegram_update',
                     'user_chat',
+                    'chat_join_request',
                 ],
                 'clean_older_than' => [
                     'callback_query'       => '1 days',
@@ -116,6 +130,7 @@ return [
                     'shipping_query'       => '3 days',
                     'telegram_update'      => '1 days',
                     'user_chat'            => '30 days',
+                    'chat_join_request'    => '30 days',
                 ]
             ],
         ],

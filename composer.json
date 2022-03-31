@@ -22,7 +22,7 @@
         }
     ],
     "require": {
-        "longman/telegram-bot": "^0.73.1",
+        "longman/telegram-bot": "^0.76.1",
         "ext-pdo": "*",
         "ext-json": "*",
         "ext-mbstring": "*",

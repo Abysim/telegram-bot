@@ -21,9 +21,11 @@
 namespace Longman\TelegramBot\Commands\SystemCommands;
 
 use Longman\TelegramBot\Commands\SystemCommand;
+use Longman\TelegramBot\DB;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Exception\TelegramException;
 use Longman\TelegramBot\Request;
+use PDO;
 
 class GenericmessageCommand extends SystemCommand
 {
@@ -51,6 +53,33 @@ class GenericmessageCommand extends SystemCommand
     public function execute(): ServerResponse
     {
         $message = $this->getMessage();
+
+        if ($message->getChat()->isPrivateChat() && $this->getTelegram()->isDbEnabled()) {
+            $pdo = DB::getPdo();
+            $configs = $this->getConfig('joinrequest');
+
+            foreach ($configs as $chatId => $config) {
+                $sql = '
+                        SELECT `id`
+                        FROM `chat_join_request`
+                        WHERE `chat_id` = :chat_id AND `user_id` = :user_id
+                        ORDER BY `id` DESC
+                        LIMIT 1';
+                $sth = $pdo->prepare($sql);
+                $sth->bindValue(':chat_id', $chatId);
+                $sth->bindValue(':user_id', $message->getFrom()->getId());
+                $sth->execute();
+                $result = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+                if (isset($result[0])) {
+                    $data = ['chat_id' => $config['admin_id']];
+                    $data['from_chat_id'] = $message->getChat()->getId();
+                    $data['message_id'] = $message->getMessageId();
+
+                    Request::forwardMessage($data);
+                }
+            }
+        }
 
         $proxyConfig = $this->getConfig('proxy');
         if (isset($proxyConfig[$message->getChat()->getId()])) {
