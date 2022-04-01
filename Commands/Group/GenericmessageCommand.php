@@ -98,7 +98,7 @@ class GenericmessageCommand extends SystemCommand
                         $username = '@' . $username;
                     }
 
-                    $data['text'] = 'Новий член ' . $config['name'] . ': ' . $username;
+                    $data['text'] = '#Новий член ' . $config['name'] . ': ' . $username;
 
                     Request::sendMessage($data);
                 }

@@ -54,7 +54,7 @@ class ChatJoinRequestCommand extends SystemCommand
                         $username = '@' . $username;
                     }
 
-                    $data['text'] = 'Новий запит на вступ до ' . "<a href=\"{$config['link']}\">{$joinRequest->getChat()->getTitle()}</a>" . ': ' . $username;
+                    $data['text'] = '#Новий запит на вступ до ' . "<a href=\"{$config['link']}\">{$joinRequest->getChat()->getTitle()}</a>" . ': ' . $username;
 
                     Request::sendMessage(['chat_id' => $joinRequest->getFrom()->getId(), 'text' => $config['text']]);
                     return Request::sendMessage($data);
