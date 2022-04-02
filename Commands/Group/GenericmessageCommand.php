@@ -72,6 +72,10 @@ class GenericmessageCommand extends SystemCommand
                 $result = $sth->fetchAll(PDO::FETCH_ASSOC);
 
                 if (isset($result[0])) {
+                    if (!empty($message->getText())) {
+                        Request::sendMessage(['chat_id' => $config['admin_id'], 'text' => '#Нове приватне повідомлення:']);
+                    }
+
                     $data = ['chat_id' => $config['admin_id']];
                     $data['from_chat_id'] = $message->getChat()->getId();
                     $data['message_id'] = $message->getMessageId();
@@ -106,6 +110,10 @@ class GenericmessageCommand extends SystemCommand
                 $adminIds = is_array($config['admin_id']) ? $config['admin_id'] : [$config['admin_id']];
 
                 foreach ($adminIds as $adminId) {
+                    if (!empty($message->getText())) {
+                        Request::sendMessage(['chat_id' => $config['admin_id'], 'text' => '#Нове повідомлення з ' . $config['name'] . ':']);
+                    }
+
                     $data = ['chat_id' => $adminId];
                     $data['from_chat_id'] = $message->getChat()->getId();
                     $data['message_id'] = $message->getMessageId();
