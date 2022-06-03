@@ -50,6 +50,15 @@ class ChatCommand extends AdminCommand
             return $this->replyToChat('Command usage: ' . $this->getUsage());
         }
 
+        $array = explode(' ', $text);
+        $id = array_shift($array);
+        if (is_numeric($id)) {
+            return Request::sendMessage(array_merge([
+                'chat_id' => $id,
+                'text'    => implode(' ', $array),
+            ]));
+        }
+
         return Request::sendMessage(array_merge([
             'chat_id' => $this->getConfig('chat_id'),
             'text'    => $text,
