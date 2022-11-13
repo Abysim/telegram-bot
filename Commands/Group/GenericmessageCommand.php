@@ -60,20 +60,24 @@ class GenericmessageCommand extends SystemCommand
 
             foreach ($configs as $chatId => $config) {
                 $sql = '
-                        SELECT `id`
-                        FROM `chat_join_request`
+                        SELECT `user_id`
+                        FROM `user_chat`
                         WHERE `chat_id` = :chat_id AND `user_id` = :user_id
-                        ORDER BY `id` DESC
                         LIMIT 1';
                 $sth = $pdo->prepare($sql);
-                $sth->bindValue(':chat_id', $chatId);
+                $sth->bindValue(':chat_id', $config['chat_id']);
                 $sth->bindValue(':user_id', $message->getFrom()->getId());
                 $sth->execute();
                 $result = $sth->fetchAll(PDO::FETCH_ASSOC);
 
                 if (isset($result[0])) {
                     if (!empty($message->getText())) {
-                        Request::sendMessage(['chat_id' => $config['admin_id'], 'text' => '#Нове приватне повідомлення:']);
+                        Request::sendMessage([
+                            'chat_id' => $config['admin_id'],
+                            'text' => '#Приватне повідомлення з ' . $config['chat_name'] . ':',
+                            'parse_mode' => 'HTML',
+                            'disable_web_page_preview' => true,
+                        ]);
                     }
 
                     $data = ['chat_id' => $config['admin_id']];
@@ -81,6 +85,29 @@ class GenericmessageCommand extends SystemCommand
                     $data['message_id'] = $message->getMessageId();
 
                     Request::forwardMessage($data);
+                } else {
+                    $sql = '
+                        SELECT `id`
+                        FROM `chat_join_request`
+                        WHERE `chat_id` = :chat_id AND `user_id` = :user_id
+                        LIMIT 1';
+                    $sth = $pdo->prepare($sql);
+                    $sth->bindValue(':chat_id', $chatId);
+                    $sth->bindValue(':user_id', $message->getFrom()->getId());
+                    $sth->execute();
+                    $result = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (isset($result[0])) {
+                        if (!empty($message->getText())) {
+                            Request::sendMessage(['chat_id' => $config['admin_id'], 'text' => '#Нове приватне повідомлення:']);
+                        }
+
+                        $data = ['chat_id' => $config['admin_id']];
+                        $data['from_chat_id'] = $message->getChat()->getId();
+                        $data['message_id'] = $message->getMessageId();
+
+                        Request::forwardMessage($data);
+                    }
                 }
             }
         }
