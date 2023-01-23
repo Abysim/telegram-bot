@@ -64,6 +64,11 @@ class StartCommand extends SystemCommand
         // If you use deep-linking, get the parameter like this:
         // $deep_linking_parameter = $this->getMessage()->getText(true);
 
+        $config = $this->getConfig();
+        if ($config['text']) {
+            return $this->replyToChat($config['text'], ['parse_mode' => 'HTML']);
+        }
+
         return $this->replyToChat(
             'Привіт!' . PHP_EOL .
             'Набери /help щоб переглянути всі команди!'

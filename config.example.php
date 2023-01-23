@@ -40,6 +40,7 @@ return [
         ],
         // Here you can set any command-specific parameters
         'configs' => [
+            'start' => ['text' => ''],
             'chatjoinrequest' => [
                 ''/*chat_id*/ => [
                     'admin_id' => '', // admins chat ID
