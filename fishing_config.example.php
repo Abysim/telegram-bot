@@ -6,7 +6,8 @@ return [
 
     'repeat' => 3600,
     'delete_time' => 60,
-    'silence_time' => '300',
+    'silence_time' => 300,
+    'silence' => '',
 
     'allowed_chats' => [
         // ids

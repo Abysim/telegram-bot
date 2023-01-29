@@ -146,10 +146,11 @@ class FishingCommand extends CustomSystemCommand
                 && $chatMessage['user_id'] != $telegram->getBotId()
                 && !in_array(mb_substr($chatMessage['text'], 0, 1), $config['command_chars'])
             ) {
-                return Request::deleteMessage([
-                    'chat_id' => $chat->getId(),
-                    'message_id' => $message->getMessageId(),
-                ]);
+                $this->messageIds[] = $this->replyToChat(
+                    $config['silence'],
+                    ['reply_to_message_id' => $message->getMessageId()]
+                )->getResult()->getMessageId();
+                return $this->deleteMessages(2);
             }
         }
 
