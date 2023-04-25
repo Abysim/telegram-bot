@@ -223,7 +223,15 @@ class FishingCommand extends CustomSystemCommand
         }
         $place = $config['places'][$type][rand(0, count($config['places'][$type]) - 1)];
         $target = $config['targets'][$type][rand(0, count($config['targets'][$type]) - 1)];
-        $size = rand(1, ($trophies[$type]['size'] ?? 5) + $config['increase'][$type]);
+
+        $trophiesCount = 0;
+        foreach ($trophies as $trophy) {
+            if ($trophy['user_id'] == $user->getId()) {
+                $trophiesCount++;
+            }
+        }
+
+        $size = rand(1, ($trophies[$type]['size'] ?? 5) + intval($config['increase'][$type] * (3 - $trophiesCount) / 3));
         $nick = "<a href=\"tg://user?id={$user->getId()}\">{$user->getFirstName()}</a>";
 
         $text = str_replace('{{place}}', $place, $config['action'][$type]);
