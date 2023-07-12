@@ -20,11 +20,15 @@
 
 namespace Longman\TelegramBot\Commands\SystemCommands;
 
+use DeepL\Translator;
+use Exception;
+use LanguageDetector\LanguageDetector;
 use Longman\TelegramBot\Commands\SystemCommand;
 use Longman\TelegramBot\DB;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Exception\TelegramException;
 use Longman\TelegramBot\Request;
+use Longman\TelegramBot\TelegramLog;
 use PDO;
 
 class GenericmessageCommand extends SystemCommand
@@ -218,32 +222,36 @@ class GenericmessageCommand extends SystemCommand
         if (in_array($message->getChat()->getId(), array_merge($translateConfig['chats'], $translateConfig['debug']))) {
             $text = trim($message->getText(true));
             if (!empty($text)) {
-                $detector = new \LanguageDetector\LanguageDetector(null, ['uk','ru']);
-                $scores = $detector->evaluate($text)->getScores();
-                if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
-                    Request::sendMessage([
-                        'chat_id' => $message->getChat()->getId(),
-                        'text' => ($scores['ru'] - $scores['uk']) . ' ' .json_encode($scores),
-                        'reply_to_message_id' => $message->getMessageId()
-                    ]);
-                }
-                if ($scores['ru'] - $scores['uk'] > 0.015 && $scores['ru'] > 0.05) {
-                    $translator = new \DeepL\Translator($translateConfig['key']);
-
-                    $result = $translator->translateText($text, null, 'uk');
+                try {
+                    $detector = new LanguageDetector(null, ['uk', 'ru']);
+                    $scores = $detector->evaluate($text)->getScores();
                     if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
                         Request::sendMessage([
                             'chat_id' => $message->getChat()->getId(),
-                            'text' => $result,
-                            'reply_to_message_id' => $message->getMessageId()
-                        ]);
-                    } elseif (strtolower($text) != strtolower($result)) {
-                        Request::sendMessage([
-                            'chat_id' => $message->getChat()->getId(),
-                            'text' => 'ПЕРЕКЛАД: ' . $result,
+                            'text' => ($scores['ru'] - $scores['uk']) . ' ' . json_encode($scores),
                             'reply_to_message_id' => $message->getMessageId()
                         ]);
                     }
+                    if ($scores['ru'] - $scores['uk'] > 0.015 && $scores['ru'] > 0.05) {
+                        $translator = new Translator($translateConfig['key']);
+
+                        $result = $translator->translateText($text, null, 'uk');
+                        if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                            Request::sendMessage([
+                                'chat_id' => $message->getChat()->getId(),
+                                'text' => $result,
+                                'reply_to_message_id' => $message->getMessageId()
+                            ]);
+                        } elseif (strtolower($text) != strtolower($result)) {
+                            Request::sendMessage([
+                                'chat_id' => $message->getChat()->getId(),
+                                'text' => 'ПЕРЕКЛАД: ' . $result,
+                                'reply_to_message_id' => $message->getMessageId()
+                            ]);
+                        }
+                    }
+                } catch (Exception $e) {
+                    TelegramLog::error($e->getMessage());
                 }
             }
         }
