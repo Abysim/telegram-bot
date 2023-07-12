@@ -232,7 +232,7 @@ class GenericmessageCommand extends SystemCommand
                             'reply_to_message_id' => $message->getMessageId()
                         ]);
                     }
-                    if ($scores['ru'] - $scores['uk'] > 0.015 && $scores['ru'] > 0.05) {
+                    if ($scores['ru'] - $scores['uk'] > 0.016 && $scores['ru'] > 0.08) {
                         $translator = new Translator($translateConfig['key']);
 
                         $result = $translator->translateText($text, null, 'uk');
