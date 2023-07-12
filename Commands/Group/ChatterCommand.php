@@ -63,6 +63,10 @@ class ChatterCommand extends CustomSystemCommand
                 && !is_numeric($firstChar)
                 && mb_strtoupper($firstChar) == mb_strtolower($firstChar)
             )
+            || (
+                $message->getReplyToMessage()
+                && mb_substr($message->getReplyToMessage()->getText(), 0, 10) == 'ПЕРЕКЛАД: '
+            )
         ) {
             return Request::emptyResponse();
         }

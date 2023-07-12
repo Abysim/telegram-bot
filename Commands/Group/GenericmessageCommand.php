@@ -182,7 +182,7 @@ class GenericmessageCommand extends SystemCommand
 
 
             return is_array($config['admin_id']) ? Request::emptyResponse() : Request::deleteMessage([
-                'chat_id' => $message->getChat()->getId() ,
+                'chat_id' => $message->getChat()->getId(),
                 'message_id' => $message->getMessageId(),
             ]);
         }
@@ -212,6 +212,40 @@ class GenericmessageCommand extends SystemCommand
         // A message has been pinned
         if ($pinned_message = $message->getPinnedMessage()) {
             return Request::emptyResponse();
+        }
+
+        $translateConfig = $this->getConfig('translate');
+        if (in_array($message->getChat()->getId(), array_merge($translateConfig['chats'], $translateConfig['debug']))) {
+            $text = trim($message->getText(true));
+            if (!empty($text)) {
+                $detector = new \LanguageDetector\LanguageDetector();
+                $scores = $detector->evaluate($text)->getScores();
+                if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                    Request::sendMessage([
+                        'chat_id' => $message->getChat()->getId(),
+                        'text' => ($scores['ru'] - $scores['uk']) . ' ' .json_encode($scores),
+                        'reply_to_message_id' => $message->getMessageId()
+                    ]);
+                }
+                if ($scores['ru'] - $scores['uk'] > 0.015 && $scores['ru'] > 0.05) {
+                    $translator = new \DeepL\Translator($translateConfig['key']);
+
+                    $result = $translator->translateText($text, null, 'uk');
+                    if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                        Request::sendMessage([
+                            'chat_id' => $message->getChat()->getId(),
+                            'text' => $result,
+                            'reply_to_message_id' => $message->getMessageId()
+                        ]);
+                    } elseif (strtolower($text) != strtolower($result)) {
+                        Request::sendMessage([
+                            'chat_id' => $message->getChat()->getId(),
+                            'text' => 'ПЕРЕКЛАД: ' . $result,
+                            'reply_to_message_id' => $message->getMessageId()
+                        ]);
+                    }
+                }
+            }
         }
 
         $this->getTelegram()->executeCommand('fishing');
