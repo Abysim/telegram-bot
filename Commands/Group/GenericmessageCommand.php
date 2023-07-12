@@ -218,7 +218,7 @@ class GenericmessageCommand extends SystemCommand
         if (in_array($message->getChat()->getId(), array_merge($translateConfig['chats'], $translateConfig['debug']))) {
             $text = trim($message->getText(true));
             if (!empty($text)) {
-                $detector = new \LanguageDetector\LanguageDetector();
+                $detector = new \LanguageDetector\LanguageDetector(null, ['uk','ru']);
                 $scores = $detector->evaluate($text)->getScores();
                 if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
                     Request::sendMessage([
