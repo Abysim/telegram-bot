@@ -20,6 +20,7 @@
 
 namespace Longman\TelegramBot\Commands\SystemCommands;
 
+use CLD2Detector;
 use DeepL\Translator;
 use Exception;
 use LanguageDetector\LanguageDetector;
@@ -221,18 +222,39 @@ class GenericmessageCommand extends SystemCommand
         $translateConfig = $this->getConfig('translate');
         if (in_array($message->getChat()->getId(), array_merge($translateConfig['chats'], $translateConfig['debug']))) {
             $text = trim($message->getText(true));
-            if (!empty($text)) {
+            if (!empty($text) && !in_array($message->getFrom()->getId(), $translateConfig['exclude'])) {
                 try {
-                    $detector = new LanguageDetector(null, ['uk', 'ru']);
-                    $scores = $detector->evaluate($text)->getScores();
+                    $translate = false;
+                    $cld2 = new CLD2Detector();
+                    $cld2score = $cld2->detect($text);
                     if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
                         Request::sendMessage([
                             'chat_id' => $message->getChat()->getId(),
-                            'text' => ($scores['ru'] - $scores['uk']) . ' ' . json_encode($scores),
+                            'text' => json_encode($cld2score),
                             'reply_to_message_id' => $message->getMessageId()
                         ]);
                     }
-                    if ($scores['ru'] - $scores['uk'] > 0.016 && $scores['ru'] > 0.08) {
+
+                    if (
+                        $cld2score['language_code'] == 'un'
+                        || ($cld2score['language_code'] == 'ru' && $cld2score['language_probability'] < 97)
+                    ) {
+                        $detector = new LanguageDetector(null, ['uk', 'ru']);
+                        $scores = $detector->evaluate($text)->getScores();
+                        if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                            Request::sendMessage([
+                                'chat_id' => $message->getChat()->getId(),
+                                'text' => ($scores['ru'] - $scores['uk']) . ' ' . json_encode($scores),
+                                'reply_to_message_id' => $message->getMessageId()
+                            ]);
+                        }
+
+                        $translate = $scores['ru'] - $scores['uk'] > 0.02 && $scores['ru'] > 0.1;
+                    } elseif ($cld2score['language_code'] == 'ru') {
+                        $translate = true;
+                    }
+
+                    if ($translate) {
                         $translator = new Translator($translateConfig['key']);
 
                         $result = $translator->translateText($text, 'ru', 'uk');
@@ -250,7 +272,12 @@ class GenericmessageCommand extends SystemCommand
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' => 'ПЕРЕКЛАД: ' . $result,
-                                'reply_to_message_id' => $message->getMessageId()
+                                //'reply_to_message_id' => $message->getMessageId()
+                            ]);
+                        } else {
+                            Request::sendMessage([
+                                'chat_id' => $this->getTelegram()->getAdminList()[0],
+                                'text' => 'Не використаний переклад:' . "\n\n" . $text . "\n\n\n\n" . $result,
                             ]);
                         }
                     }
