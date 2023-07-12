@@ -235,14 +235,18 @@ class GenericmessageCommand extends SystemCommand
                     if ($scores['ru'] - $scores['uk'] > 0.016 && $scores['ru'] > 0.08) {
                         $translator = new Translator($translateConfig['key']);
 
-                        $result = $translator->translateText($text, null, 'uk');
+                        $result = $translator->translateText($text, 'ru', 'uk');
                         if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
-                                'text' => $result,
+                                'text' =>  preg_replace("/[^а-я]+/u", "", mb_strtolower($text)) . ' '
+                                    . preg_replace("/[^а-я]+/u", "", mb_strtolower($result)),
                                 'reply_to_message_id' => $message->getMessageId()
                             ]);
-                        } elseif (strtolower($text) != strtolower($result)) {
+                        } elseif (
+                            preg_replace("/[^а-я]+/u", "", mb_strtolower($text))
+                            != preg_replace("/[^а-я]+/u", "", mb_strtolower($result))
+                        ) {
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' => 'ПЕРЕКЛАД: ' . $result,
