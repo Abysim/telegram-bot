@@ -236,17 +236,17 @@ class GenericmessageCommand extends SystemCommand
                         $translator = new Translator($translateConfig['key']);
 
                         $result = $translator->translateText($text, 'ru', 'uk');
+                        $percent = 0;
+                        $charsText = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($text));
+                        $charsResult = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($result));
+                        similar_text($charsText, $charsResult, $percent);
                         if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
-                                'text' =>  preg_replace("/[^а-я]+/u", "", mb_strtolower($text)) . ' '
-                                    . preg_replace("/[^а-я]+/u", "", mb_strtolower($result)),
+                                'text' =>  $percent . ' ' . $charsText . ' ' . $charsResult,
                                 'reply_to_message_id' => $message->getMessageId()
                             ]);
-                        } elseif (
-                            preg_replace("/[^а-я]+/u", "", mb_strtolower($text))
-                            != preg_replace("/[^а-я]+/u", "", mb_strtolower($result))
-                        ) {
+                        } elseif ($percent < 85) {
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' => 'ПЕРЕКЛАД: ' . $result,
