@@ -272,12 +272,6 @@ class GenericmessageCommand extends SystemCommand
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' => 'ПЕРЕКЛАД: ' . $result,
-                                //'reply_to_message_id' => $message->getMessageId()
-                            ]);
-                        } else {
-                            Request::sendMessage([
-                                'chat_id' => $this->getTelegram()->getAdminList()[0],
-                                'text' => 'Не використаний переклад:' . "\n\n" . $text . "\n\n\n\n" . $result,
                             ]);
                         }
                     }

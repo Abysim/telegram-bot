@@ -65,7 +65,10 @@ class ChatterCommand extends CustomSystemCommand
             )
             || (
                 $message->getReplyToMessage()
-                && mb_substr($message->getReplyToMessage()->getText(), 0, 10) == 'ПЕРЕКЛАД: '
+                && (
+                    mb_substr($message->getReplyToMessage()->getText(), 0, 10) == 'ПЕРЕКЛАД: '
+                    || mb_substr($message->getReplyToMessage()->getText(), 0, 5) == 'GPT: '
+                )
             )
         ) {
             return Request::emptyResponse();
