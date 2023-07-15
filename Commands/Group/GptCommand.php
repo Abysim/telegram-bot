@@ -6,13 +6,17 @@
 
 namespace Longman\TelegramBot\Commands\UserCommands;
 
+use Longman\TelegramBot\Commands\SystemCommands\CustomSystemCommand;
 use Longman\TelegramBot\Commands\UserCommand;
+use Longman\TelegramBot\DB;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Exception\TelegramException;
 use Longman\TelegramBot\Request;
+use Longman\TelegramBot\TelegramLog;
 use OpenAI;
+use PDO;
 
-class GptCommand extends UserCommand
+class GptCommand extends CustomSystemCommand
 {
     /**
      * @var string
@@ -48,20 +52,63 @@ class GptCommand extends UserCommand
         $text = trim($message->getText(true));
 
         if (in_array($chat->getId(), $config['chats']) && !empty($text)) {
+            $messages = [['role' => 'user', 'content' => $text]];
+            if ($message->getReplyToMessage()) {
+                $messages[] = [
+                    'role' => 'assistant',
+                    'content' => str_replace('GPT: ', '', $message->getReplyToMessage()->getText(true))
+                ];
+                $isAssistant = false;
+
+                $pdo = DB::getPdo();
+                $sql = '
+                        SELECT `reply_to_message`
+                        FROM `message`
+                        WHERE `chat_id` = :chat_id AND `id` = :id
+                        ORDER BY `id` DESC
+                        LIMIT 1';
+                $sth = $pdo->prepare($sql);
+                $sth->bindValue(':chat_id', $message->getChat()->getId());
+                $sth->bindValue(':id', $message->getReplyToMessage()->getMessageId());
+                $sth->execute();
+                $request = $sth->fetchAll(PDO::FETCH_ASSOC);
+                $replyId = $request[0]['reply_to_message'] ?? null;
+
+                while ($replyId) {
+                    $sql = '
+                        SELECT `reply_to_message`, `text`
+                        FROM `message`
+                        WHERE `chat_id` = :chat_id AND `id` = :id
+                        ORDER BY `id` DESC
+                        LIMIT 1';
+                    $sth = $pdo->prepare($sql);
+                    $sth->bindValue(':chat_id', $message->getChat()->getId());
+                    $sth->bindValue(':id', $replyId);
+                    $sth->execute();
+                    $request = $sth->fetchAll(PDO::FETCH_ASSOC);
+                    $replyId = $request[0]['reply_to_message'] ?? null;
+                    if (!empty($request[0]['text'])) {
+                        $messages[] = [
+                            'role' => $isAssistant ? 'assistant' : 'user',
+                            'content' => str_ireplace(['GPT: ', '/gpt '], '', $request[0]['text'])
+                        ];
+                        $isAssistant = !$isAssistant;
+                    }
+                }
+            }
+
+            $messages[] = ['role' => 'system', 'content' => $config['role']];
+
             $client = OpenAI::client($config['key']);
 
             $response = $client->chat()->create([
                 'model' => 'gpt-3.5-turbo',
-                'messages' => [
-                    ['role' => 'system', 'content' => $config['role']],
-                    ['role' => 'user', 'content' => $text],
-                ],
+                'messages' => array_reverse($messages),
+                'n' => 1,
             ]);
 
             foreach ($response->choices as $result) {
-                return Request::sendMessage([
-                    'chat_id' => $message->getChat()->getId(),
-                    'text' => 'GPT: ' . $result->message->content,
+                return $this->replyToChat('GPT: ' . $result->message->content, [
                     'reply_to_message_id' => $message->getMessageId()
                 ]);
             }

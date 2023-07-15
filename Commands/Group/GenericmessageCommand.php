@@ -281,6 +281,13 @@ class GenericmessageCommand extends SystemCommand
             }
         }
 
+        if (
+            $message->getReplyToMessage()
+            && mb_substr($message->getReplyToMessage()->getText(), 0, 5) == 'GPT: '
+        ) {
+            $this->getTelegram()->executeCommand('gpt');
+        }
+
         $this->getTelegram()->executeCommand('fishing');
 
         $this->getTelegram()->executeCommand('chatter');
