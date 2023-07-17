@@ -6,6 +6,7 @@
 
 namespace Longman\TelegramBot\Commands\UserCommands;
 
+use Exception;
 use Longman\TelegramBot\Commands\SystemCommands\CustomSystemCommand;
 use Longman\TelegramBot\Commands\UserCommand;
 use Longman\TelegramBot\DB;
@@ -52,11 +53,14 @@ class GptCommand extends CustomSystemCommand
         $text = trim($message->getText(true));
 
         if (in_array($chat->getId(), $config['chats']) && !empty($text)) {
+            $length = strlen($config['role']) + strlen($text);
             $messages = [['role' => 'user', 'content' => $text]];
             if ($message->getReplyToMessage()) {
+                $content = str_replace('GPT: ', '', $message->getReplyToMessage()->getText(true));
+                $length += strlen($content);
                 $messages[] = [
                     'role' => 'assistant',
-                    'content' => str_replace('GPT: ', '', $message->getReplyToMessage()->getText(true))
+                    'content' => $content,
                 ];
                 $isAssistant = false;
 
@@ -88,9 +92,16 @@ class GptCommand extends CustomSystemCommand
                     $request = $sth->fetchAll(PDO::FETCH_ASSOC);
                     $replyId = $request[0]['reply_to_message'] ?? null;
                     if (!empty($request[0]['text'])) {
+                        $content = str_ireplace(['GPT: ', '/gpt '], '', $request[0]['text']);
+                        $length += strlen($content);
+
+                        if ($length > 11111) {
+                            break;
+                        }
+
                         $messages[] = [
                             'role' => $isAssistant ? 'assistant' : 'user',
-                            'content' => str_ireplace(['GPT: ', '/gpt '], '', $request[0]['text'])
+                            'content' => $content,
                         ];
                         $isAssistant = !$isAssistant;
                     }
@@ -99,13 +110,19 @@ class GptCommand extends CustomSystemCommand
 
             $messages[] = ['role' => 'system', 'content' => $config['role']];
 
-            $client = OpenAI::client($config['key']);
+            try {
+                $client = OpenAI::client($config['key']);
 
-            $response = $client->chat()->create([
-                'model' => 'gpt-3.5-turbo',
-                'messages' => array_reverse($messages),
-                'n' => 1,
-            ]);
+                $response = $client->chat()->create([
+                    'model' => 'gpt-3.5-turbo',
+                    'messages' => array_reverse($messages),
+                    'n' => 1,
+                ]);
+            } catch (Exception $e) {
+                TelegramLog::error($length . ' ' . $e->getMessage());
+
+                return Request::emptyResponse();
+            }
 
             foreach ($response->choices as $result) {
                 return $this->replyToChat('GPT: ' . $result->message->content, [
