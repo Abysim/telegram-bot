@@ -45,8 +45,10 @@ class CustomSystemCommand extends SystemCommand
                     $sth = $pdo->prepare($sql);
 
                     $entities = [];
-                    foreach ($sentMessage->getEntities() as $entity) {
-                        $entities[] = $entity->getRawData();
+                    if (!empty($sentMessage->getEntities())) {
+                        foreach ($sentMessage->getEntities() as $entity) {
+                            $entities[] = $entity->getRawData();
+                        }
                     }
                     $params = [
                         ':chat_id' => $sentMessage->getChat()->getId(),
