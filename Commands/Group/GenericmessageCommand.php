@@ -221,7 +221,7 @@ class GenericmessageCommand extends SystemCommand
 
         $translateConfig = $this->getConfig('translate');
         if (in_array($message->getChat()->getId(), array_merge($translateConfig['chats'], $translateConfig['debug']))) {
-            $text = trim($message->getText(true));
+            $text = $message->getText(true) ?? $message->getCaption();
             if (!empty($text) && !in_array($message->getFrom()->getId(), $translateConfig['exclude'])) {
                 try {
                     $translate = false;
@@ -268,7 +268,7 @@ class GenericmessageCommand extends SystemCommand
                                 'text' =>  $percent . ' ' . $charsText . ' ' . $charsResult,
                                 'reply_to_message_id' => $message->getMessageId()
                             ]);
-                        } elseif ($percent < 85) {
+                        } elseif ($percent < 80) {
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' => 'ПЕРЕКЛАД: ' . $result,
