@@ -130,5 +130,7 @@ class GptCommand extends CustomSystemCommand
                 ]);
             }
         }
+
+        return Request::emptyResponse();
     }
 }
