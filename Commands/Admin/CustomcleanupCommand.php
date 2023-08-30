@@ -404,6 +404,7 @@ class CustomcleanupCommand extends AdminCommand
         $pdo  = DB::getPdo();
         try {
             $pdo->beginTransaction();
+            $pdo->query('SET foreign_key_checks = 0');
 
             foreach ($queries as $query) {
                 // Delete in chunks to not block / improve speed on big tables.
@@ -418,6 +419,7 @@ class CustomcleanupCommand extends AdminCommand
                 TelegramLog::error('Error while executing query: ' . $query);
             }
 
+            $pdo->query('SET foreign_key_checks = 1');
             // commit changes to the database and end transaction
             $pdo->commit();
 
