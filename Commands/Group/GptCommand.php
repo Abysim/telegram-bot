@@ -52,8 +52,9 @@ class GptCommand extends CustomSystemCommand
         $config = $this->getConfig();
         $text = trim($message->getText(true));
 
-        if (in_array($chat->getId(), $config['chats']) && !empty($text)) {
-            $length = strlen($config['role']) + strlen($text);
+        if (in_array($chat->getId(), array_keys($config['chats'])) && !empty($text)) {
+            $role = $config['chats'][$chat->getId()] ?: $config['role'];
+            $length = strlen($role) + strlen($text);
             $messages = [['role' => 'user', 'content' => $text]];
             if ($message->getReplyToMessage()) {
                 $content = str_replace('GPT: ', '', $message->getReplyToMessage()->getText(true));
@@ -108,13 +109,13 @@ class GptCommand extends CustomSystemCommand
                 }
             }
 
-            $messages[] = ['role' => 'system', 'content' => $config['role']];
+            $messages[] = ['role' => 'system', 'content' => $role];
 
             try {
                 $client = OpenAI::client($config['key']);
 
                 $response = $client->chat()->create([
-                    'model' => 'gpt-3.5-turbo',
+                    'model' => $config['model'][$chat->getId()] ?? 'gpt-3.5-turbo',
                     'messages' => array_reverse($messages),
                     'n' => 1,
                 ]);
