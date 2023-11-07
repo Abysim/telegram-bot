@@ -53,7 +53,7 @@ class GptCommand extends CustomSystemCommand
         $text = trim($message->getText(true));
 
         if (in_array($chat->getId(), array_keys($config['chats'])) && !empty($text)) {
-            $role = $config['chats'][$chat->getId()] ?: $config['role'];
+            $role = $config['chats'][$chat->getId()] ?? $config['role'];
             $length = strlen($role) + strlen($text);
             $messages = [['role' => 'user', 'content' => $text]];
             if ($message->getReplyToMessage()) {
