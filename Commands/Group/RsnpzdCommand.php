@@ -125,13 +125,9 @@ class RsnpzdCommand extends UserCommand
         $cap = '';
 
         if (mb_strlen($caption) > self::MAX_LEN - 1) {
-            TelegramLog::error(mb_strlen($caption) . '|' . $caption);
             $spacePos = mb_strpos(strrev(mb_substr($caption, 0 , self::MAX_LEN)), ' ');
-            TelegramLog::error($spacePos);
             $cap = mb_substr($caption, 0, self::MAX_LEN - 1 - $spacePos) . "\n";
-            TelegramLog::error($cap);
             $caption = ' ' . mb_substr($caption, self::MAX_LEN - $spacePos - 1);
-            TelegramLog::error($caption);
         }
         $cap .= $caption . ':' . str_repeat('.', self::MAX_LEN - 1 - mb_strlen($caption));
 
