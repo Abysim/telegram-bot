@@ -1,0 +1,148 @@
+<?php
+
+/**
+ * "/rsnpzd" command
+ */
+
+namespace Longman\TelegramBot\Commands\UserCommands;
+
+use Exception;
+use Longman\TelegramBot\Commands\UserCommand;
+use Longman\TelegramBot\Entities\ServerResponse;
+use Longman\TelegramBot\Exception\TelegramException;
+use Longman\TelegramBot\TelegramLog;
+
+class RsnpzdCommand extends UserCommand
+{
+    private const STATS = [
+        'personnel_units' => 'Особовий склад',
+        'tanks' => 'Танки',
+        'armoured_fighting_vehicles' => 'Бойовi машини',
+        'artillery_systems' => 'Артилерiйськi системи',
+        'mlrs' => 'РСЗВ',
+        'aa_warfare_systems' => 'Засоби ППО',
+        'planes' => 'Літаки',
+        'helicopters' => 'Гелікоптери',
+        'vehicles_fuel_tanks' => 'Автомобільна техніка та цистерни з паливом',
+        'warships_cutters' => 'Кораблi та катери',
+        'uav_systems' => 'БПЛА',
+        'special_military_equip' => 'Спецiальна технiка',
+        'atgm_srbm_systems' => 'Установки ОТРК/ТРК',
+        'cruise_missiles' => 'Крилаті ракети',
+        'submarines' => 'Підводні човн',
+    ];
+
+    private const MAX_LEN = 24;
+
+    private const NUM_LEN = 8;
+
+    private const MONTHS = [
+        "сiч",
+        "лют",
+        "бер",
+        "квi",
+        "тра",
+        "чер",
+        "лип",
+        "сер",
+        "вер",
+        "жов",
+        "лис",
+        "гру",
+    ];
+
+    /**
+     * Main command execution
+     *
+     * @return ServerResponse
+     * @throws TelegramException
+     */
+    public function execute(): ServerResponse
+    {
+        $error = null;
+        $result = [];
+
+        try {
+            $response = file_get_contents('https://russianwarship.rip/api/v2/statistics/latest');
+        } catch (Exception $e) {
+            $error = $e->getMessage();
+        }
+
+        $stat = json_decode($response, true);
+
+        if (isset($stat['message']) && $stat['message'] == 'The data were fetched successfully.') {
+            [$year, $month, $day] = explode('-', $stat['data']['date']);
+            $result[] = sprintf(
+                'Статистика втрат окупантiв станом на %d %s %d (День %d):',
+                $day,
+                self::MONTHS[$month - 1],
+                $year,
+                $stat['data']['day']
+            );
+            $result[] = '<code>';
+
+            foreach (self::STATS as $key => $caption) {
+                $result[] = self::createLine($caption, $stat['data']['stats'][$key], $stat['data']['increase'][$key]);
+            }
+
+            $result[] = '</code>';
+        } else {
+            $result[] = 'Пiд час завантаження даних сталася помилка:';
+            $result[] = '';
+
+            if (is_null($error)) {
+                if (is_null($stat)) {
+                    $result[] = 'Хибнi данi';
+                } else {
+                    $result[] = $stat['message'];
+                }
+            } else {
+                $result[] = $error;
+            }
+
+            $result[] = '';
+            $result[] = 'Але, незважаючи на це, всеодно';
+        }
+
+        $result[] = 'Руснi пизда!';
+
+        return $this->replyToChat(implode("\n", $result), [
+            'parse_mode' => 'HTML',
+        ]);
+    }
+
+    /**
+     * @param string $caption
+     * @param int $total
+     * @param int $increase
+     *
+     * @return string
+     */
+    private static function createLine(string $caption, int $total, int $increase)
+    {
+        $inc = '';
+        $tot = '';
+        $cap = '';
+
+        if (mb_strlen($caption) > self::MAX_LEN - 1) {
+            TelegramLog::error(mb_strlen($caption) . '|' . $caption);
+            $spacePos = mb_strpos(strrev(mb_substr($caption, 0 , self::MAX_LEN)), ' ');
+            TelegramLog::error($spacePos);
+            $cap = mb_substr($caption, 0, self::MAX_LEN - 1 - $spacePos) . "\n";
+            TelegramLog::error($cap);
+            $caption = ' ' . mb_substr($caption, self::MAX_LEN - $spacePos - 1);
+            TelegramLog::error($caption);
+        }
+        $cap .= $caption . ':' . str_repeat('.', self::MAX_LEN - 1 - mb_strlen($caption));
+
+        if ($total > 0) {
+            $tot = $total;
+
+            if ($increase > 0) {
+                $inc .=  str_repeat(' ', self::NUM_LEN - strlen($tot)) . "[+$increase]";
+            }
+        }
+
+        return $cap . $tot . $inc;
+    }
+}
