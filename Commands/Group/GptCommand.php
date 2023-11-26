@@ -8,7 +8,6 @@ namespace Longman\TelegramBot\Commands\UserCommands;
 
 use Exception;
 use Longman\TelegramBot\Commands\SystemCommands\CustomSystemCommand;
-use Longman\TelegramBot\Commands\UserCommand;
 use Longman\TelegramBot\DB;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Exception\TelegramException;

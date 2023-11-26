@@ -7,12 +7,11 @@
 namespace Longman\TelegramBot\Commands\UserCommands;
 
 use Exception;
-use Longman\TelegramBot\Commands\UserCommand;
+use Longman\TelegramBot\Commands\SystemCommands\CustomSystemCommand;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Exception\TelegramException;
-use Longman\TelegramBot\TelegramLog;
 
-class RsnpzdCommand extends UserCommand
+class RsnpzdCommand extends CustomSystemCommand
 {
     private const STATS = [
         'personnel_units' => 'Особовий склад',
@@ -29,7 +28,7 @@ class RsnpzdCommand extends UserCommand
         'special_military_equip' => 'Спецiальна технiка',
         'atgm_srbm_systems' => 'Установки ОТРК/ТРК',
         'cruise_missiles' => 'Крилаті ракети',
-        'submarines' => 'Підводні човн',
+        'submarines' => 'Підводні човни',
     ];
 
     private const MAX_LEN = 24;
@@ -52,6 +51,26 @@ class RsnpzdCommand extends UserCommand
     ];
 
     /**
+     * @var string
+     */
+    protected $name = 'rsnpzd';
+
+    /**
+     * @var string
+     */
+    protected $description = 'rsnpzd';
+
+    /**
+     * @var string
+     */
+    protected $usage = '/rsnpzd';
+
+    /**
+     * @var string
+     */
+    protected $version = '1.0.0';
+
+    /**
      * Main command execution
      *
      * @return ServerResponse
@@ -59,6 +78,9 @@ class RsnpzdCommand extends UserCommand
      */
     public function execute(): ServerResponse
     {
+        $message = $this->getMessage();
+        $this->messageIds[] = $message->getMessageId();
+
         $error = null;
         $result = [];
 
@@ -106,9 +128,12 @@ class RsnpzdCommand extends UserCommand
 
         $result[] = 'Руснi пизда!';
 
-        return $this->replyToChat(implode("\n", $result), [
+        $this->messageIds[] = $this->replyToChat(implode("\n", $result), [
+            'reply_to_message_id' => $message->getMessageId(),
             'parse_mode' => 'HTML',
-        ]);
+        ])->getResult()->getMessageId();
+
+        return $this->deleteMessages();
     }
 
     /**
@@ -118,7 +143,7 @@ class RsnpzdCommand extends UserCommand
      *
      * @return string
      */
-    private static function createLine(string $caption, int $total, int $increase)
+    private static function createLine(string $caption, int $total, int $increase): string
     {
         $inc = '';
         $tot = '';

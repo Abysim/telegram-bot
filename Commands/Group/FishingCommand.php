@@ -37,35 +37,6 @@ class FishingCommand extends CustomSystemCommand
     protected $version = '1.0.0';
 
     /**
-     * @var array
-     */
-    private array $messageIds = [];
-
-    /**
-     * @param int|null $timeout
-     *
-     * @return ServerResponse
-     */
-    private function deleteMessages(?int $timeout = null): ServerResponse
-    {
-        $message = $this->getMessage();
-        $chat = $message->getChat();
-
-        if (!$chat->isPrivateChat()) {
-            shell_exec('php '
-                . $this->getConfig('exe') . ' '
-                . $this->getConfig('secret') . ' '
-                . 'deletemessages '
-                . ($timeout ?? $this->getConfig('delete_time')) . ' '
-                . $chat->getId() . ' '
-                . implode(' ', $this->messageIds)
-                . ' > /dev/null 2>/dev/null &');
-        }
-
-        return Request::emptyResponse();
-    }
-
-    /**
      * Main command execution
      *
      * @return ServerResponse

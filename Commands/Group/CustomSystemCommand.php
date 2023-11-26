@@ -18,6 +18,11 @@ use PDOException;
 class CustomSystemCommand extends SystemCommand
 {
     /**
+     * @var array
+     */
+    protected array $messageIds = [];
+
+    /**
      * @param string $text
      * @param array $data
      *
@@ -50,13 +55,14 @@ class CustomSystemCommand extends SystemCommand
                             $entities[] = $entity->getRawData();
                         }
                     }
+                    $replyToMessage = $sentMessage->getReplyToMessage();
                     $params = [
                         ':chat_id' => $sentMessage->getChat()->getId(),
                         ':id' => $sentMessage->getMessageId(),
                         ':user_id' => $sentMessage->getFrom()->getId(),
                         ':date' => date('Y-m-d H:i:s', $sentMessage->getDate()),
-                        ':reply_to_chat' => $sentMessage->getReplyToMessage()->getChat()->getId() ?? null,
-                        ':reply_to_message' => $sentMessage->getReplyToMessage()->getMessageId() ?? null,
+                        ':reply_to_chat' => $replyToMessage ? ($replyToMessage->getChat()->getId() ?? null) : null,
+                        ':reply_to_message' => $replyToMessage ? ($replyToMessage->getMessageId() ?? null) : null,
                         ':edit_date' => date('Y-m-d H:i:s'),
                         ':text' => $sentMessage->getText(),
                         ':entities'  => empty($entities) ? null : json_encode($entities),
@@ -69,6 +75,39 @@ class CustomSystemCommand extends SystemCommand
             }
 
             return $result;
+        }
+
+        return Request::emptyResponse();
+    }
+
+    /**
+     * @param int|null $timeout
+     *
+     * @return ServerResponse
+     */
+    protected function deleteMessages(?int $timeout = null): ServerResponse
+    {
+        $message = $this->getMessage();
+        $chat = $message->getChat();
+
+        if (!$chat->isPrivateChat()) {
+            TelegramLog::error('php '
+                . $this->getConfig('exe') . ' '
+                . $this->getConfig('secret') . ' '
+                . 'deletemessages '
+                . ($timeout ?? $this->getConfig('delete_time')) . ' '
+                . $chat->getId() . ' '
+                . implode(' ', $this->messageIds)
+                . ' > /dev/null 2>/dev/null &');
+
+            shell_exec('php '
+                . $this->getConfig('exe') . ' '
+                . $this->getConfig('secret') . ' '
+                . 'deletemessages '
+                . ($timeout ?? $this->getConfig('delete_time')) . ' '
+                . $chat->getId() . ' '
+                . implode(' ', $this->messageIds)
+                . ' > /dev/null 2>/dev/null &');
         }
 
         return Request::emptyResponse();
