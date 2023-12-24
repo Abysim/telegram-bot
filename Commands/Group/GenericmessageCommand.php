@@ -59,6 +59,19 @@ class GenericmessageCommand extends SystemCommand
     {
         $message = $this->getMessage();
 
+        $forwardedChat = $message->getForwardFromChat();
+        if ($forwardedChat) {
+            $bannedChannels = $this->getConfig('banned_channels');
+            foreach ($bannedChannels as $bannedChannel) {
+                if (strpos($forwardedChat->getTitle(), $bannedChannel) !== false) {
+                    return Request::deleteMessage([
+                        'chat_id' => $message->getChat()->getId(),
+                        'message_id' => $message->getMessageId(),
+                    ]);
+                }
+            }
+        }
+
         if ($message->getChat()->isPrivateChat() && $this->getTelegram()->isDbEnabled()) {
             $pdo = DB::getPdo();
             $configs = $this->getConfig('joinrequest');
