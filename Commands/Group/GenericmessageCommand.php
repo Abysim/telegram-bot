@@ -238,6 +238,7 @@ class GenericmessageCommand extends SystemCommand
             if (!empty($text) && !in_array($message->getFrom()->getId(), $translateConfig['exclude'])) {
                 try {
                     $translate = false;
+                    $sourceLang = null;
                     $cld2 = new CLD2Detector();
                     $cld2score = $cld2->detect($text);
                     if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
@@ -250,7 +251,7 @@ class GenericmessageCommand extends SystemCommand
 
                     if (
                         $cld2score['language_code'] == 'un'
-                        || ($cld2score['language_code'] == 'ru' && $cld2score['language_probability'] < 97)
+                        || ($cld2score['language_code'] != 'uk' && $cld2score['language_probability'] < 97)
                     ) {
                         $detector = new LanguageDetector(null, ['uk', 'ru']);
                         $scores = $detector->evaluate($text)->getScores();
@@ -263,14 +264,16 @@ class GenericmessageCommand extends SystemCommand
                         }
 
                         $translate = $scores['ru'] - $scores['uk'] > 0.02 && $scores['ru'] > 0.1;
-                    } elseif ($cld2score['language_code'] == 'ru') {
+                        $sourceLang = 'ru';
+                    } elseif ($cld2score['language_code'] != 'uk') {
                         $translate = true;
+                        $sourceLang = $cld2score['language_code'];
                     }
 
                     if ($translate) {
                         $translator = new Translator($translateConfig['key']);
 
-                        $result = $translator->translateText($text, 'ru', 'uk');
+                        $result = $translator->translateText($text, $sourceLang, 'uk');
                         $percent = 0;
                         $charsText = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($text));
                         $charsResult = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($result));
@@ -281,7 +284,7 @@ class GenericmessageCommand extends SystemCommand
                                 'text' =>  $percent . ' ' . $charsText . ' ' . $charsResult,
                                 'reply_to_message_id' => $message->getMessageId()
                             ]);
-                        } elseif ($percent < 80) {
+                        } elseif (strlen($charsResult) > 8 && $percent < 80) {
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' => 'ПЕРЕКЛАД: ' . $result,
