@@ -794,20 +794,22 @@ class ChatterCommand extends CustomSystemCommand
                                     $params[$keyResp] = $idAux[$j];
                                 }
                             }
-                            $values = implode(',', $values);
+                            if (!empty($values)) {
+                                $values = implode(',', $values);
 
-                            $sql = "
-                                INSERT IGNORE INTO `responses` (`trig`,`resp`)
-                                VALUES $values
-                            ";
+                                $sql = "
+                                    INSERT IGNORE INTO `responses` (`trig`,`resp`)
+                                    VALUES $values
+                                ";
 
-                            //TelegramLog::debug(var_export([
-                            //    '$values' => $values,
-                            //    '$params' => $params,
-                            //], true));
+                                //TelegramLog::debug(var_export([
+                                //    '$values' => $values,
+                                //    '$params' => $params,
+                                //], true));
 
-                            $sth = $pdo->prepare($sql);
-                            $sth->execute($params);
+                                $sth = $pdo->prepare($sql);
+                                $sth->execute($params);
+                            }
                         }
                     }
                 }
