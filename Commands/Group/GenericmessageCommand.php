@@ -20,6 +20,7 @@
 
 namespace Longman\TelegramBot\Commands\SystemCommands;
 
+use Aws\Comprehend\ComprehendClient;
 use CLD2Detector;
 use DeepL\Translator;
 use Exception;
@@ -251,20 +252,44 @@ class GenericmessageCommand extends SystemCommand
 
                     if (
                         $cld2score['language_code'] == 'un'
-                        || ($cld2score['language_code'] != 'uk' && $cld2score['language_probability'] < 97)
+                        || ($cld2score['language_code'] != 'uk' && $cld2score['language_probability'] < 99)
                     ) {
-                        $detector = new LanguageDetector(null, ['uk', 'ru']);
-                        $scores = $detector->evaluate($text)->getScores();
-                        if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
-                            Request::sendMessage([
-                                'chat_id' => $message->getChat()->getId(),
-                                'text' => ($scores['ru'] - $scores['uk']) . ' ' . json_encode($scores),
-                                'reply_to_message_id' => $message->getMessageId()
+                        try {
+                            $comprehend = new ComprehendClient([
+                                'region' => 'us-east-1',
+                                'version' => 'latest',
+                                'credentials' => [
+                                    'key' => $translateConfig['aws']['key'],
+                                    'secret' => $translateConfig['aws']['secret'],
+                                ]
                             ]);
-                        }
 
-                        $translate = $scores['ru'] - $scores['uk'] > 0.02 && $scores['ru'] > 0.1;
-                        $sourceLang = 'ru';
+                            $languages = $comprehend->detectDominantLanguage(['Text' => $text])->get('Languages');
+
+                            if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                                Request::sendMessage([
+                                    'chat_id' => $message->getChat()->getId(),
+                                    'text' => json_encode($languages),
+                                    'reply_to_message_id' => $message->getMessageId()
+                                ]);
+                            }
+
+                            $sourceLang = $languages[0]['LanguageCode'] ?? 'uk';
+                            $translate = $sourceLang != 'uk';
+                        } catch (Exception $e) {
+                            $detector = new LanguageDetector(null, ['uk', 'ru']);
+                            $scores = $detector->evaluate($text)->getScores();
+                            if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                                Request::sendMessage([
+                                    'chat_id' => $message->getChat()->getId(),
+                                    'text' => ($scores['ru'] - $scores['uk']) . ' ' . json_encode($scores),
+                                    'reply_to_message_id' => $message->getMessageId()
+                                ]);
+                            }
+
+                            $translate = $scores['ru'] - $scores['uk'] > 0.02 && $scores['ru'] > 0.1;
+                            $sourceLang = 'ru';
+                        }
                     } elseif ($cld2score['language_code'] != 'uk') {
                         $translate = true;
                         $sourceLang = $cld2score['language_code'];
