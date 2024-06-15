@@ -314,6 +314,13 @@ class GenericmessageCommand extends SystemCommand
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' => 'ПЕРЕКЛАД: ' . $result,
                             ]);
+
+                            if ($sourceLang == 'ru' && in_array($message->getChat()->getId(), $translateConfig['delete'])) {
+                                Request::deleteMessage([
+                                    'chat_id' => $message->getChat()->getId(),
+                                    'message_id' => $message->getMessageId(),
+                                ]);
+                            }
                         }
                     }
                 } catch (Exception $e) {
