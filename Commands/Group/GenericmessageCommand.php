@@ -312,15 +312,25 @@ class GenericmessageCommand extends SystemCommand
                                 'reply_to_message_id' => $message->getMessageId()
                             ]);
                         } elseif (strlen($charsResult) > 8 && $percent < 80) {
-                            Request::sendMessage([
-                                'chat_id' => $message->getChat()->getId(),
-                                'text' => 'ПЕРЕКЛАД: ' . $result,
-                            ]);
-
                             if ($sourceLang == 'ru' && in_array($message->getChat()->getId(), $translateConfig['delete'])) {
+                                $name = trim($message->getFrom()->getFirstName() . ' ' . $message->getFrom()->getLastName());
+                                $data = [
+                                    'chat_id' => $message->getChat()->getId(),
+                                    'text' => 'ПЕРЕКЛАД: <' . $name . '> '. $result,
+                                ];
+                                if ($message->getReplyToMessage()) {
+                                    $data['reply_to_message_id'] =  $message->getReplyToMessage()->getMessageId();
+                                }
+                                Request::sendMessage($data);
+
                                 Request::deleteMessage([
                                     'chat_id' => $message->getChat()->getId(),
                                     'message_id' => $message->getMessageId(),
+                                ]);
+                            } else {
+                                Request::sendMessage([
+                                    'chat_id' => $message->getChat()->getId(),
+                                    'text' => 'ПЕРЕКЛАД: ' . $result,
                                 ]);
                             }
                         }
