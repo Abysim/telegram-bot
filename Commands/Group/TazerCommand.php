@@ -94,15 +94,22 @@ class TazerCommand extends UserCommand
         if ($time < 1 || $time > 3) {
             $time = rand(1, 3);
         }
-        Request::restrictChatMember([
+        $result = Request::restrictChatMember([
             'chat_id' => $message->getChat()->getId(),
             'user_id' => $id,
             'until_date' => time() + 60 * $time,
         ]);
 
-        return Request::sendMessage([
+        if ($result->getOk()) {
+            return Request::sendMessage([
+                'chat_id' => $message->getChat()->getId(),
+                'text' => '@' . $username . ', представник влади вдарив вас шокером. Ваші м\'язи вас не слухаються і ви нездатні говорити впродовж ' . $times[$time],
+            ]);
+        }
+
+        return Request::deleteMessage([
             'chat_id' => $message->getChat()->getId(),
-            'text' => '@' . $username . ', представник влади вдарив вас шокером. Ваші м\'язи вас не слухаються і ви нездатні говорити впродовж ' . $times[$time],
+            'message_id' => $message->getMessageId(),
         ]);
     }
 }

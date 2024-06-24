@@ -43,7 +43,7 @@ try {
     // (this example requires Monolog: composer require monolog/monolog)
     Longman\TelegramBot\TelegramLog::initialize(
         new Monolog\Logger('telegram_bot', [
-            (new Monolog\Handler\StreamHandler($config['logging']['debug'], Monolog\Logger::DEBUG))->setFormatter(new Monolog\Formatter\LineFormatter(null, null, true)),
+            //(new Monolog\Handler\StreamHandler($config['logging']['debug'], Monolog\Logger::DEBUG))->setFormatter(new Monolog\Formatter\LineFormatter(null, null, true)),
             (new Monolog\Handler\StreamHandler($config['logging']['error'], Monolog\Logger::ERROR))->setFormatter(new Monolog\Formatter\LineFormatter(null, null, true)),
         ]),
         //new Monolog\Logger('telegram_bot_updates', [
