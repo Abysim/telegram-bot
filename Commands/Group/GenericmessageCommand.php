@@ -276,7 +276,7 @@ class GenericmessageCommand extends SystemCommand
                                 ]);
                             }
 
-                            if ($languages[0]['Score'] ?? 0 < 0.8) {
+                            if (($languages[0]['Score'] ?? 0) < 0.8) {
                                 throw new Exception('Score to low!');
                             }
 
