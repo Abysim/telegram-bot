@@ -276,6 +276,10 @@ class GenericmessageCommand extends SystemCommand
                                 ]);
                             }
 
+                            if ($languages[0]['Score'] ?? 0 < 0.8) {
+                                throw new Exception('Score to low!');
+                            }
+
                             $sourceLang = $languages[0]['LanguageCode'] ?? 'uk';
                             $translate = $sourceLang != 'uk';
                         } catch (Exception $e) {
