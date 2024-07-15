@@ -20,6 +20,7 @@ namespace Longman\TelegramBot\Commands\SystemCommands;
 
 use Longman\TelegramBot\Commands\SystemCommand;
 use Longman\TelegramBot\Entities\ServerResponse;
+use Longman\TelegramBot\Request;
 
 class ChannelpostCommand extends SystemCommand
 {
@@ -45,8 +46,26 @@ class ChannelpostCommand extends SystemCommand
      */
     public function execute(): ServerResponse
     {
-        // Get the channel post
-        $channel_post = $this->getChannelPost();
+        $message = $this->getChannelPost();
+
+        $proxyConfig = $this->getConfig('proxy');
+        if (isset($proxyConfig[$message->getChat()->getId()])) {
+            $config = $proxyConfig[$message->getChat()->getId()];
+            $adminIds = is_array($config['admin_id']) ? $config['admin_id'] : [$config['admin_id']];
+
+            foreach ($adminIds as $adminId) {
+                $data = ['chat_id' => $adminId];
+                $data['from_chat_id'] = $message->getChat()->getId();
+                $data['message_id'] = $message->getMessageId();
+
+                if (
+                    empty($config['text'])
+                    || strpos($message->getText() ?? $message->getCaption(), $config['text']) !== false
+                ) {
+                    Request::forwardMessage($data);
+                }
+            }
+        }
 
         return parent::execute();
     }
