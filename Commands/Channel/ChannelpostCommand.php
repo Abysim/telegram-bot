@@ -53,15 +53,15 @@ class ChannelpostCommand extends SystemCommand
             $config = $proxyConfig[$message->getChat()->getId()];
             $adminIds = is_array($config['admin_id']) ? $config['admin_id'] : [$config['admin_id']];
 
-            foreach ($adminIds as $adminId) {
-                $data = ['chat_id' => $adminId];
-                $data['from_chat_id'] = $message->getChat()->getId();
-                $data['message_id'] = $message->getMessageId();
+            if (
+                empty($config['text'])
+                || strpos($message->getText() ?? $message->getCaption(), $config['text']) !== false
+            ) {
+                foreach ($adminIds as $adminId) {
+                    $data = ['chat_id' => $adminId];
+                    $data['from_chat_id'] = $message->getChat()->getId();
+                    $data['message_id'] = $message->getMessageId();
 
-                if (
-                    empty($config['text'])
-                    || strpos($message->getText() ?? $message->getCaption(), $config['text']) !== false
-                ) {
                     Request::forwardMessage($data);
                 }
             }
