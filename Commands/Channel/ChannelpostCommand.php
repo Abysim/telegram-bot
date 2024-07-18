@@ -57,12 +57,19 @@ class ChannelpostCommand extends SystemCommand
                 empty($config['text'])
                 || strpos($message->getText() ?? $message->getCaption(), $config['text']) !== false
             ) {
+                $i = 0;
                 foreach ($adminIds as $adminId) {
-                    $data = ['chat_id' => $adminId];
-                    $data['from_chat_id'] = $message->getChat()->getId();
-                    $data['message_id'] = $message->getMessageId();
+                    $i++;
 
-                    Request::forwardMessage($data);
+                    shell_exec('php '
+                        . $this->getConfig('exe') . ' '
+                        . $this->getConfig('secret') . ' '
+                        . 'forwardmessage '
+                        . (600 * $i) . ' '
+                        . $adminId . ' '
+                        . $message->getChat()->getId() . ' '
+                        . $message->getMessageId() . ' '
+                        . ' > /dev/null 2>/dev/null &');
                 }
             }
         }
