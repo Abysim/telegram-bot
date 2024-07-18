@@ -98,7 +98,7 @@ class CustomSystemCommand extends SystemCommand
                 . ($timeout ?? $this->getConfig('delete_time')) . ' '
                 . $chat->getId() . ' '
                 . implode(' ', $this->messageIds)
-                . ' > /dev/null 2>/dev/null &');
+                . ' > /dev/null 2>&1&');
 
             shell_exec('php '
                 . $this->getConfig('exe') . ' '
@@ -107,7 +107,7 @@ class CustomSystemCommand extends SystemCommand
                 . ($timeout ?? $this->getConfig('delete_time')) . ' '
                 . $chat->getId() . ' '
                 . implode(' ', $this->messageIds)
-                . ' > /dev/null 2>/dev/null &');
+                . ' > /dev/null 2>&1&');
         }
 
         return Request::emptyResponse();

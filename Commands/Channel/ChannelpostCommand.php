@@ -20,7 +20,6 @@ namespace Longman\TelegramBot\Commands\SystemCommands;
 
 use Longman\TelegramBot\Commands\SystemCommand;
 use Longman\TelegramBot\Entities\ServerResponse;
-use Longman\TelegramBot\Request;
 
 class ChannelpostCommand extends SystemCommand
 {
@@ -69,7 +68,7 @@ class ChannelpostCommand extends SystemCommand
                         . $adminId . ' '
                         . $message->getChat()->getId() . ' '
                         . $message->getMessageId() . ' '
-                        . ' > /dev/null 2>/dev/null &');
+                        . ' > /dev/null 2>&1&');
                 }
             }
         }
