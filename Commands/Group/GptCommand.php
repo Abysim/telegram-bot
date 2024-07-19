@@ -114,7 +114,7 @@ class GptCommand extends CustomSystemCommand
                 $client = OpenAI::client($config['key']);
 
                 $response = $client->chat()->create([
-                    'model' => $config['model'][$chat->getId()] ?? 'gpt-3.5-turbo',
+                    'model' => $config['model'][$chat->getId()] ?? 'gpt-4o-mini',
                     'messages' => array_reverse($messages),
                     'n' => 1,
                 ]);
