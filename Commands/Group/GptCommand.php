@@ -95,7 +95,7 @@ class GptCommand extends CustomSystemCommand
                         $content = str_ireplace(['GPT: ', '/gpt '], '', $request[0]['text']);
                         $length += strlen($content);
 
-                        if ($length > 11111) {
+                        if ($length > 88888) {
                             break;
                         }
 
