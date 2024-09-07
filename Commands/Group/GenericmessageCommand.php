@@ -244,7 +244,7 @@ class GenericmessageCommand extends SystemCommand
                     $sourceLang = null;
                     $cld2 = new CLD2Detector();
                     $cld2score = $cld2->detect($text);
-                    if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                    if (in_array($message->getChat()->getId(), $translateConfig['debug']) && mb_substr($message->getReplyToMessage()->getText(), 0, 5) != 'GPT: ') {
                         Request::sendMessage([
                             'chat_id' => $message->getChat()->getId(),
                             'text' => json_encode($cld2score),
@@ -268,7 +268,7 @@ class GenericmessageCommand extends SystemCommand
 
                             $languages = $comprehend->detectDominantLanguage(['Text' => $text])->get('Languages');
 
-                            if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                            if (in_array($message->getChat()->getId(), $translateConfig['debug']) && mb_substr($message->getReplyToMessage()->getText(), 0, 5) != 'GPT: ') {
                                 Request::sendMessage([
                                     'chat_id' => $message->getChat()->getId(),
                                     'text' => json_encode($languages),
@@ -285,7 +285,7 @@ class GenericmessageCommand extends SystemCommand
                         } catch (Exception $e) {
                             $detector = new LanguageDetector(null, ['uk', 'ru']);
                             $scores = $detector->evaluate($text)->getScores();
-                            if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                            if (in_array($message->getChat()->getId(), $translateConfig['debug']) && mb_substr($message->getReplyToMessage()->getText(), 0, 5) != 'GPT: ') {
                                 Request::sendMessage([
                                     'chat_id' => $message->getChat()->getId(),
                                     'text' => ($scores['ru'] - $scores['uk']) . ' ' . json_encode($scores),
@@ -309,7 +309,7 @@ class GenericmessageCommand extends SystemCommand
                         $charsText = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($text));
                         $charsResult = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($result));
                         similar_text($charsText, $charsResult, $percent);
-                        if (in_array($message->getChat()->getId(), $translateConfig['debug'])) {
+                        if (in_array($message->getChat()->getId(), $translateConfig['debug']) && mb_substr($message->getReplyToMessage()->getText(), 0, 5) != 'GPT: ') {
                             Request::sendMessage([
                                 'chat_id' => $message->getChat()->getId(),
                                 'text' =>  $percent . ' ' . $charsText . ' ' . $charsResult,
