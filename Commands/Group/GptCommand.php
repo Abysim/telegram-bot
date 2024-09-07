@@ -6,7 +6,6 @@
 
 namespace Longman\TelegramBot\Commands\UserCommands;
 
-use DeepL\DeepLException;
 use DeepL\Translator;
 use Exception;
 use Longman\TelegramBot\Commands\SystemCommands\CustomSystemCommand;
@@ -68,6 +67,13 @@ class GptCommand extends CustomSystemCommand
             $messages = [['role' => 'user', 'content' => $text]];
             if ($message->getReplyToMessage()) {
                 $content = str_replace('GPT: ', '', $message->getReplyToMessage()->getText(true));
+                if (isset($translator)) {
+                    try {
+                        $content = (string) $translator->translateText($content, null, 'en-US');
+                    } catch (Exception $e) {
+                        TelegramLog::error($e->getMessage());
+                    }
+                }
                 $length += strlen($content);
                 $messages[] = [
                     'role' => 'assistant',
@@ -106,7 +112,7 @@ class GptCommand extends CustomSystemCommand
                         $content = str_ireplace(['GPT: ', '/gpt '], '', $request[0]['text']);
                         if (isset($translator)) {
                             try {
-                                $content = (string) $translator->translateText($text, null, 'en-US');
+                                $content = (string) $translator->translateText($content, null, 'en-US');
                             } catch (Exception $e) {
                                 TelegramLog::error($e->getMessage());
                             }
