@@ -6,6 +6,8 @@
 
 namespace Longman\TelegramBot\Commands\UserCommands;
 
+use DeepL\DeepLException;
+use DeepL\Translator;
 use Exception;
 use Longman\TelegramBot\Commands\SystemCommands\CustomSystemCommand;
 use Longman\TelegramBot\DB;
@@ -52,7 +54,16 @@ class GptCommand extends CustomSystemCommand
         $text = trim($message->getText(true));
 
         if (in_array($chat->getId(), array_keys($config['chats'])) && !empty($text)) {
-            $role = $config['chats'][$chat->getId()] ?? $config['role'];
+            if (!empty($config['chats'][$chat->getId()]['translate'])) {
+                try {
+                    $translator = new Translator($config['chats'][$chat->getId()]['translate']);
+                    $text = (string) $translator->translateText($text, null, 'en-US');
+                } catch (Exception $e) {
+                    TelegramLog::error($e->getMessage());
+                }
+            }
+
+            $role = $config['chats'][$chat->getId()]['role'] ?? $config['role'];
             $length = strlen($role) + strlen($text);
             $messages = [['role' => 'user', 'content' => $text]];
             if ($message->getReplyToMessage()) {
@@ -93,6 +104,14 @@ class GptCommand extends CustomSystemCommand
                     $replyId = $request[0]['reply_to_message'] ?? null;
                     if (!empty($request[0]['text'])) {
                         $content = str_ireplace(['GPT: ', '/gpt '], '', $request[0]['text']);
+                        if (isset($translator)) {
+                            try {
+                                $content = (string) $translator->translateText($text, null, 'en-US');
+                            } catch (Exception $e) {
+                                TelegramLog::error($e->getMessage());
+                            }
+                        }
+
                         $length += strlen($content);
 
                         if ($length > 88888) {
@@ -111,10 +130,15 @@ class GptCommand extends CustomSystemCommand
             $messages[] = ['role' => 'system', 'content' => $role];
 
             try {
-                $client = OpenAI::client($config['key']);
+                $client = OpenAI::factory()
+                    ->withApiKey($config['chats'][$chat->getId()]['key'] ?? $config['key']);
+                if (!empty($config['chats'][$chat->getId()]['uri'])) {
+                    $client = $client->withBaseUri($config['chats'][$chat->getId()]['uri']);
+                }
+                $client = $client->make();
 
                 $response = $client->chat()->create([
-                    'model' => $config['model'][$chat->getId()] ?? 'gpt-4o-mini',
+                    'model' => $config['chats'][$chat->getId()]['model'] ?? $config['model'],
                     'messages' => array_reverse($messages),
                     'n' => 1,
                 ]);
@@ -125,7 +149,16 @@ class GptCommand extends CustomSystemCommand
             }
 
             foreach ($response->choices as $result) {
-                return $this->replyToChat('GPT: ' . $result->message->content, [
+                $content = $result->message->content;
+                if (isset($translator)) {
+                    try {
+                        $content = (string) $translator->translateText($content, 'en', 'uk');
+                    } catch (Exception $e) {
+                        TelegramLog::error($e->getMessage());
+                    }
+                }
+
+                return $this->replyToChat('GPT: ' . $content, [
                     'reply_to_message_id' => $message->getMessageId()
                 ]);
             }
