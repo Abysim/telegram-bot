@@ -165,7 +165,7 @@ class GptCommand extends CustomSystemCommand
                 }
 
                 return $this->replyToChat('GPT: ' . $content, [
-                    'reply_to_message_id' => $message->getMessageId()
+                    'reply_to_message_id' => $message->getMessageId(), 'parse_mode' => 'Markdown'
                 ]);
             }
         }
