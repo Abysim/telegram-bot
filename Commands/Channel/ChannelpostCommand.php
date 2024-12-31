@@ -56,9 +56,17 @@ class ChannelpostCommand extends SystemCommand
                 empty($config['text'])
                 || strpos($message->getText() ?? $message->getCaption(), $config['text']) !== false
             ) {
+                $isNewYear = false;
+                $now = date('m-d H:i');
+                if (($now > '12-31 09:30' && $now <= '12-31 23:59') || ($now >= '01-01 00:00' && $now < '01-01 12:30')) {
+                    $isNewYear = true;
+                }
+
                 $i = 0;
                 foreach ($adminIds as $adminId) {
-                    $i++;
+                    if (!$isNewYear) {
+                        $i++;
+                    }
 
                     shell_exec('php '
                         . $this->getConfig('exe') . ' '
