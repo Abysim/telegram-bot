@@ -58,7 +58,7 @@ class ChannelpostCommand extends SystemCommand
             ) {
                 $isNewYear = false;
                 $now = date('m-d H:i');
-                if (($now > '12-31 09:30' && $now <= '12-31 23:59') || ($now >= '01-01 00:00' && $now < '01-01 12:30')) {
+                if ($now > '12-31 09:30' && $now <= '12-31 23:59') {
                     $isNewYear = true;
                 }
 
