@@ -138,8 +138,8 @@ class GptCommand extends CustomSystemCommand
             try {
                 $client = OpenAI::factory()
                     ->withApiKey($config['chats'][$chat->getId()]['key'] ?? $config['key']);
-                if (!empty($config['chats'][$chat->getId()]['uri'])) {
-                    $client = $client->withBaseUri($config['chats'][$chat->getId()]['uri']);
+                if (!empty($config['chats'][$chat->getId()]['uri'] ?? $config['uri'])) {
+                    $client = $client->withBaseUri($config['chats'][$chat->getId()]['uri'] ?? $config['uri']);
                 }
                 $client = $client->make();
 
@@ -162,6 +162,16 @@ class GptCommand extends CustomSystemCommand
                     } catch (Exception $e) {
                         TelegramLog::error($e->getMessage());
                     }
+                }
+
+                if (strpos('</think>', $content) !== false) {
+                    $parts = explode('</think>', $content);
+
+                    $this->replyToChat('GPT: ' . $parts[0], [
+                        'reply_to_message_id' => $message->getMessageId(), 'parse_mode' => 'Markdown'
+                    ]);
+
+                    $content = end($parts);
                 }
 
                 return $this->replyToChat('GPT: ' . $content, [
