@@ -133,7 +133,9 @@ class GptCommand extends CustomSystemCommand
                 }
             }
 
-            $messages[] = ['role' => 'system', 'content' => $role];
+            if (!empty($role)) {
+                $messages[] = ['role' => 'system', 'content' => $role];
+            }
 
             try {
                 $client = OpenAI::factory()
