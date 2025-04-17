@@ -145,11 +145,17 @@ class GptCommand extends CustomSystemCommand
                 }
                 $client = $client->make();
 
-                $response = $client->chat()->create([
+                $params = [
                     'model' => $config['chats'][$chat->getId()]['model'] ?? $config['model'],
                     'messages' => array_reverse($messages),
                     'n' => 1,
-                ]);
+                ];
+
+                if (!empty($config['chats'][$chat->getId()]['reasoning_effort'])) {
+                    $params['reasoning_effort'] = $config['chats'][$chat->getId()]['reasoning_effort'];
+                }
+
+                $response = $client->chat()->create($params);
             } catch (Exception $e) {
                 TelegramLog::error($length . ' ' . $e->getMessage());
 
