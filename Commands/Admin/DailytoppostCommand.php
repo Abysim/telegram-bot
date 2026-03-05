@@ -4,7 +4,7 @@
  * Admin "/dailytoppost" command
  *
  * Forwards the most reacted message of the day from configured groups to their target channels.
- * Runs via cron at 18:00 UTC daily.
+ * Runs daily via cron.
  *
  * Configuration:
  * $telegram->setCommandConfig('dailytoppost', [
