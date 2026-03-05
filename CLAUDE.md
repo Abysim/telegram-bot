@@ -9,6 +9,9 @@ Personal Telegram bot (PHP) built on `longman/telegram-bot` 0.76.1. Features: fi
 ## Commands
 
 ```bash
+# Install dependencies (composer.lock is gitignored, so this resolves fresh)
+composer install
+
 # Lint (PSR-12 via PHP CodeSniffer)
 composer check-code
 
@@ -82,6 +85,12 @@ Schema files: `fishing_structure.sql`, `chatter_structure.sql`.
 - Namespace: `Longman\TelegramBot\Commands\{SystemCommands|AdminCommands|UserCommands}`
 - File naming: `{CommandName}Command.php`
 - Primary language in UI strings: Ukrainian
+
+## Gotchas
+- `composer.lock` is gitignored — fresh clones resolve dependencies via `composer install` from `composer.json` constraints
+- Some commands in `Commands/Group/` use `UserCommands` namespace (e.g., `GptCommand`, `RsnpzdCommand`) rather than `SystemCommands` — this is intentional for Telegram Bot library routing
+- The `GenericmessageCommand` class name exists in multiple directories (Group, Conversation, Message, Payments, ServiceMessages) — only `Group/` is loaded
+- `exe.php` requires the config secret as first CLI argument — without it the process silently dies
 
 ## Key Patterns
 - Commands return `ServerResponse` from `execute()`
