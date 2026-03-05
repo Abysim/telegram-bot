@@ -66,7 +66,7 @@ class DailytoppostCommand extends AdminCommand
             }
 
             try {
-                $topMessage = $this->getTopMessage($pdo, (int) $chatId);
+                $topMessage = $this->getTopMessage($pdo, (string) $chatId);
 
                 if ($topMessage === null) {
                     TelegramLog::debug(
@@ -102,11 +102,11 @@ class DailytoppostCommand extends AdminCommand
      * Get the message with the most reactions in the last 24 hours
      *
      * @param PDO $pdo
-     * @param int $chatId
+     * @param string $chatId
      *
      * @return array|null ['message_id' => int, 'total' => int]
      */
-    private function getTopMessage(PDO $pdo, int $chatId): ?array
+    private function getTopMessage(PDO $pdo, string $chatId): ?array
     {
         $sql = "
             SELECT mrc.message_id, mrc.reactions
@@ -115,13 +115,13 @@ class DailytoppostCommand extends AdminCommand
                 SELECT message_id, MAX(id) as max_id
                 FROM `message_reaction_count`
                 WHERE chat_id = :chat_id
-                  AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                  AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
                 GROUP BY message_id
             ) latest ON mrc.id = latest.max_id
         ";
 
         $sth = $pdo->prepare($sql);
-        $sth->bindValue(':chat_id', $chatId, PDO::PARAM_INT);
+        $sth->bindValue(':chat_id', $chatId, PDO::PARAM_STR);
         $sth->execute();
 
         $rows = $sth->fetchAll(PDO::FETCH_ASSOC);
@@ -167,7 +167,7 @@ class DailytoppostCommand extends AdminCommand
     {
         try {
             $pdo->exec(
-                "DELETE FROM `message_reaction_count` WHERE `created_at` < DATE_SUB(NOW(), INTERVAL 2 DAY)"
+                "DELETE FROM `message_reaction_count` WHERE `created_at` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 DAY)"
             );
         } catch (PDOException $e) {
             TelegramLog::error('DailytoppostCommand cleanup: ' . $e->getMessage());
