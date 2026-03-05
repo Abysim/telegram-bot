@@ -51,19 +51,20 @@ class DailytoppostCommand extends AdminCommand
      */
     public function execute(): ServerResponse
     {
-        $config = $this->getConfig();
+        $config = array_filter(
+            $this->getConfig(),
+            static fn($channelId, $chatId) => is_numeric($chatId) && is_numeric($channelId),
+            ARRAY_FILTER_USE_BOTH
+        );
 
         if (empty($config)) {
-            TelegramLog::debug('DailytoppostCommand: No configuration found.');
+            TelegramLog::debug('DailytoppostCommand: No valid configuration pairs found.');
             return Request::emptyResponse();
         }
 
         $pdo = DB::getPdo();
 
         foreach ($config as $chatId => $channelId) {
-            if (!is_numeric($chatId) || !is_numeric($channelId)) {
-                continue;
-            }
 
             try {
                 $topMessage = $this->getTopMessage($pdo, (string) $chatId);
