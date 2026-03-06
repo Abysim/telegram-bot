@@ -93,8 +93,6 @@ class DailytoppostCommand extends AdminCommand
             }
         }
 
-        $this->cleanupOldReactions($pdo);
-
         return Request::emptyResponse();
     }
 
@@ -226,24 +224,5 @@ class DailytoppostCommand extends AdminCommand
         $topMessageId = array_key_first($totals);
 
         return ['message_id' => $topMessageId, 'total' => $totals[$topMessageId]];
-    }
-
-    /**
-     * Clean up reaction data older than 2 days
-     *
-     * @param PDO $pdo
-     */
-    private function cleanupOldReactions(PDO $pdo): void
-    {
-        try {
-            $pdo->exec(
-                "DELETE FROM `message_reaction_count` WHERE `created_at` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 DAY)"
-            );
-            $pdo->exec(
-                "DELETE FROM `message_reaction` WHERE `created_at` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 DAY)"
-            );
-        } catch (PDOException $e) {
-            TelegramLog::error('DailytoppostCommand cleanup: ' . $e->getMessage());
-        }
     }
 }
