@@ -65,7 +65,6 @@ class DailytoppostCommand extends AdminCommand
         $pdo = DB::getPdo();
 
         foreach ($config as $chatId => $channelId) {
-
             try {
                 $topMessage = $this->getTopMessage($pdo, (string) $chatId);
 
@@ -100,7 +99,8 @@ class DailytoppostCommand extends AdminCommand
     }
 
     /**
-     * Get the message with the most reactions in the last 24 hours
+     * Get the message with the most reactions in the last 24 hours.
+     * Checks both message_reaction_count (anonymous) and message_reaction (per-user) tables.
      *
      * @param PDO $pdo
      * @param string $chatId
@@ -108,6 +108,20 @@ class DailytoppostCommand extends AdminCommand
      * @return array|null ['message_id' => int, 'total' => int]
      */
     private function getTopMessage(PDO $pdo, string $chatId): ?array
+    {
+        return $this->getTopFromReactionCount($pdo, $chatId)
+            ?? $this->getTopFromReaction($pdo, $chatId);
+    }
+
+    /**
+     * Get top message from anonymous aggregate reactions (message_reaction_count)
+     *
+     * @param PDO $pdo
+     * @param string $chatId
+     *
+     * @return array|null
+     */
+    private function getTopFromReactionCount(PDO $pdo, string $chatId): ?array
     {
         $sql = "
             SELECT mrc.message_id, mrc.reactions
@@ -160,6 +174,61 @@ class DailytoppostCommand extends AdminCommand
     }
 
     /**
+     * Get top message from per-user reactions (message_reaction)
+     *
+     * @param PDO $pdo
+     * @param string $chatId
+     *
+     * @return array|null
+     */
+    private function getTopFromReaction(PDO $pdo, string $chatId): ?array
+    {
+        $sql = "
+            SELECT mr.message_id, mr.new_reaction
+            FROM `message_reaction` mr
+            INNER JOIN (
+                SELECT user_id, message_id, MAX(id) as max_id
+                FROM `message_reaction`
+                WHERE chat_id = :chat_id
+                  AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
+                GROUP BY user_id, message_id
+            ) latest ON mr.id = latest.max_id
+        ";
+
+        $sth = $pdo->prepare($sql);
+        $sth->bindValue(':chat_id', $chatId, PDO::PARAM_STR);
+        $sth->execute();
+
+        $rows = $sth->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        $totals = [];
+
+        foreach ($rows as $row) {
+            $reactions = json_decode($row['new_reaction'], true);
+
+            if (!is_array($reactions) || empty($reactions)) {
+                continue;
+            }
+
+            $messageId = $row['message_id'];
+            $totals[$messageId] = ($totals[$messageId] ?? 0) + count($reactions);
+        }
+
+        if (empty($totals)) {
+            return null;
+        }
+
+        arsort($totals);
+        $topMessageId = array_key_first($totals);
+
+        return ['message_id' => $topMessageId, 'total' => $totals[$topMessageId]];
+    }
+
+    /**
      * Clean up reaction data older than 2 days
      *
      * @param PDO $pdo
@@ -169,6 +238,9 @@ class DailytoppostCommand extends AdminCommand
         try {
             $pdo->exec(
                 "DELETE FROM `message_reaction_count` WHERE `created_at` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 DAY)"
+            );
+            $pdo->exec(
+                "DELETE FROM `message_reaction` WHERE `created_at` < DATE_SUB(UTC_TIMESTAMP(), INTERVAL 2 DAY)"
             );
         } catch (PDOException $e) {
             TelegramLog::error('DailytoppostCommand cleanup: ' . $e->getMessage());
