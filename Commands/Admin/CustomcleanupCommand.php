@@ -251,6 +251,9 @@ class CustomcleanupCommand extends AdminCommand
             'poll'            => ['table' => TB_POLL, 'field' => 'created_at'],
             'request_limiter' => ['table' => TB_REQUEST_LIMITER, 'field' => 'created_at'],
             'shipping_query'  => ['table' => TB_SHIPPING_QUERY, 'field' => 'created_at'],
+            'chat_join_request'  => ['table' => TB_CHAT_JOIN_REQUEST, 'field' => 'created_at'],
+            'message_reaction_count'  => ['table' => TB_MESSAGE_REACTION_COUNT, 'field' => 'created_at'],
+            'message_reaction'  => ['table' => TB_MESSAGE_REACTION, 'field' => 'created_at'],
         ];
 
         foreach (array_intersect(array_keys($simple_tables), $tables_to_clean) as $table_to_clean) {
