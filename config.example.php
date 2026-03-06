@@ -65,6 +65,13 @@ return [
             'chat' => ['chat_id' => ''],
             'fishing' => require __DIR__ . '/fishing_config.php',
             'chatter' => require __DIR__ . '/chatter_config.php',
+            'dailytoppost' => [
+                // Each entry maps a source group to its target channel
+                ''/*source_group_chat_id*/ => '',/*target_channel_id*/
+                // Multiple pairs supported:
+                // '-1001234567890' => '-1009876543210',
+                // '-1001111111111' => '-1002222222222',
+            ],
             // - Google geocode/timezone API key for /date command (see DateCommand.php)
             // 'date'    => ['google_api_key' => 'your_google_api_key_here'],
             // - OpenWeatherMap.org API key for /weather command (see WeatherCommand.php)
