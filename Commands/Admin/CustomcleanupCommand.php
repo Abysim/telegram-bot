@@ -101,6 +101,9 @@ class CustomcleanupCommand extends AdminCommand
         'telegram_update'      => '30 days',
         'user'                 => '365 days',
         'user_chat'            => '365 days',
+        'chat_join_request'    => '90 days',
+        'message_reaction_count' => '30 days',
+        'message_reaction'     => '30 days',
     ];
 
     /**
