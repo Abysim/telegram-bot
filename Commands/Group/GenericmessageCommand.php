@@ -194,7 +194,8 @@ class GenericmessageCommand extends SystemCommand
                 $adminIds = is_array($config['admin_id']) ? $config['admin_id'] : [$config['admin_id']];
 
                 foreach ($adminIds as $adminId) {
-                    if ($message->getForwardFrom() || $message->getForwardFromChat() || $message->getChat()->isChannel()) {
+                    $senderChat = $message->getSenderChat();
+                    if ($message->getForwardFrom() || $message->getForwardFromChat() || ($senderChat && $senderChat->isChannel()) || $message->getChat()->isChannel()) {
                         continue;
                     }
 

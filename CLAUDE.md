@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Personal Telegram bot (PHP) built on `longman/telegram-bot` 0.76.1. Features: fishing/hunting/digging game, MegaHAL-inspired Markov chain chatbot, OpenAI GPT integration, auto-translation (DeepL + AWS Comprehend), message proxying, admin tools, and Ukrainian war loss stats.
+Personal Telegram bot (PHP) built on `longman/telegram-bot` 0.83.1. Features: fishing/hunting/digging game, MegaHAL-inspired Markov chain chatbot, OpenAI GPT integration, auto-translation (DeepL + AWS Comprehend), message proxying, admin tools, and Ukrainian war loss stats.
 
 ## Commands
 
@@ -78,7 +78,16 @@ Schema files: `fishing_structure.sql`, `chatter_structure.sql`.
 ### Configuration
 `config.php` returns an array with all settings. Command-specific config is under `commands.configs.<command_name>` and accessed via `$this->getConfig('key')`. Separate config files: `fishing_config.php`, `chatter_config.php`.
 
-**Never modify `config.php`, `fishing_config.php`, or `chatter_config.php`** — they contain production secrets. Use `.example.php` variants as reference.
+`config.php`, `fishing_config.php`, `chatter_config.php` contain production secrets — **never edit without explicit user approval**. Use `.example.php` variants as reference.
+
+## Deployment
+- **Server**: `ssh vps-web` → `~/web/bot.abysim.com/public_html`
+- **Logs**: `~/web/bot.abysim.com/private/logs/php-telegram-bot-{debug,error}.log` (debug log disabled by default)
+- **Deploy files**: `scp <file> vps-web:~/web/bot.abysim.com/public_html/<file>` — **never deploy without explicit user approval**
+- **Local PHP 8.2 is available via `p` alias** (default `php` is 7.2) — use `p` for local lint/phpcs
+- **MySQL is on external shared hosting** (not localhost) — connection config in `config.php`
+- DB migrations: `vendor/longman/telegram-bot/utils/db-schema-update/`
+- **Query live DB**: `ssh vps-web` then `mysql` CLI (credentials in `config.php` on server)
 
 ## Code Style
 - PSR-12 (enforced by phpcs)
@@ -91,6 +100,11 @@ Schema files: `fishing_structure.sql`, `chatter_structure.sql`.
 - Some commands in `Commands/Group/` use `UserCommands` namespace (e.g., `GptCommand`, `RsnpzdCommand`) rather than `SystemCommands` — this is intentional for Telegram Bot library routing
 - The `GenericmessageCommand` class name exists in multiple directories (Group, Conversation, Message, Payments, ServiceMessages) — only `Group/` is loaded
 - `exe.php` requires the config secret as first CLI argument — without it the process silently dies
+- `set.php` returns "Webhook is already set" without updating `allowed_updates` — must delete webhook first (`$telegram->deleteWebhook()`) then re-run `set.php`
+- `unset.php` only works via web request with `?secret=` param — use `$telegram->deleteWebhook()` from CLI instead
+- Telegram sends `message_reaction` (per-user) for groups with visible reaction authors, and `message_reaction_count` (anonymous aggregate) for groups with hidden authors — code must handle both
+- DB column names differ across tables (e.g., `message.id` vs `message_reaction.message_id` referencing the same value) — always verify column names from `structure.sql`, migrations, or live DB before writing SQL
+- DB is only accessible from the production server (IP-restricted) — use `ssh vps-web` then `mysql` CLI to inspect live data
 
 ## Key Patterns
 - Commands return `ServerResponse` from `execute()`

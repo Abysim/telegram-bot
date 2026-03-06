@@ -75,11 +75,21 @@ class DailytoppostCommand extends AdminCommand
                     continue;
                 }
 
-                $result = Request::forwardMessage([
-                    'chat_id'      => $channelId,
-                    'from_chat_id' => $chatId,
-                    'message_id'   => $topMessage['message_id'],
-                ]);
+                $messageIds = $this->getAlbumMessageIds($pdo, (string) $chatId, $topMessage['message_id']);
+
+                if (count($messageIds) > 1) {
+                    $result = Request::forwardMessages([
+                        'chat_id'      => $channelId,
+                        'from_chat_id' => $chatId,
+                        'message_ids'  => $messageIds,
+                    ]);
+                } else {
+                    $result = Request::forwardMessage([
+                        'chat_id'      => $channelId,
+                        'from_chat_id' => $chatId,
+                        'message_id'   => $topMessage['message_id'],
+                    ]);
+                }
 
                 if (!$result->isOk()) {
                     TelegramLog::error(
@@ -135,7 +145,7 @@ class DailytoppostCommand extends AdminCommand
                 SELECT 1
                 FROM `message` m
                 WHERE m.chat_id = :chat_id
-                  AND m.message_id = mrc.message_id
+                  AND m.id = mrc.message_id
                   AND m.date >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
             )
         ";
@@ -210,7 +220,10 @@ class DailytoppostCommand extends AdminCommand
             return null;
         }
 
+        $positiveEmojis = ["\u{1F44D}", "\u{2764}", "\u{2764}\u{200D}\u{1F525}", "\u{1F970}", "\u{1F60D}"];
+
         $totals = [];
+        $positives = [];
 
         foreach ($rows as $row) {
             $reactions = json_decode($row['new_reaction'], true);
@@ -221,15 +234,85 @@ class DailytoppostCommand extends AdminCommand
 
             $messageId = $row['message_id'];
             $totals[$messageId] = ($totals[$messageId] ?? 0) + count($reactions);
+
+            $positiveCount = 0;
+            foreach ($reactions as $reaction) {
+                if (isset($reaction['emoji']) && in_array($reaction['emoji'], $positiveEmojis, true)) {
+                    $positiveCount++;
+                }
+            }
+            $positives[$messageId] = ($positives[$messageId] ?? 0) + $positiveCount;
         }
 
         if (empty($totals)) {
             return null;
         }
 
-        arsort($totals);
-        $topMessageId = array_key_first($totals);
+        $messageIds = array_keys($totals);
+        $placeholders = implode(',', array_fill(0, count($messageIds), '?'));
+        $dateSql = "
+            SELECT `id`, `date`
+            FROM `message`
+            WHERE chat_id = ? AND `id` IN ($placeholders)
+        ";
+        $dateSth = $pdo->prepare($dateSql);
+        $dateSth->execute(array_merge([$chatId], $messageIds));
+
+        $dates = [];
+        while ($row = $dateSth->fetch(PDO::FETCH_ASSOC)) {
+            $dates[$row['id']] = $row['date'];
+        }
+
+        usort($messageIds, function ($a, $b) use ($totals, $positives, $dates) {
+            if ($totals[$a] !== $totals[$b]) {
+                return $totals[$b] <=> $totals[$a];
+            }
+            $posA = $positives[$a] ?? 0;
+            $posB = $positives[$b] ?? 0;
+            if ($posA !== $posB) {
+                return $posB <=> $posA;
+            }
+            $dateA = $dates[$a] ?? '1970-01-01 00:00:00';
+            $dateB = $dates[$b] ?? '1970-01-01 00:00:00';
+            return $dateB <=> $dateA;
+        });
+
+        $topMessageId = $messageIds[0];
 
         return ['message_id' => $topMessageId, 'total' => $totals[$topMessageId]];
+    }
+
+    /**
+     * Get all message IDs in the same album, or just the single message ID
+     *
+     * @param PDO $pdo
+     * @param string $chatId
+     * @param int $messageId
+     *
+     * @return int[]
+     */
+    private function getAlbumMessageIds(PDO $pdo, string $chatId, int $messageId): array
+    {
+        $sql = "SELECT `media_group_id` FROM `message` WHERE `chat_id` = :chat_id AND `id` = :id";
+        $sth = $pdo->prepare($sql);
+        $sth->bindValue(':chat_id', $chatId, PDO::PARAM_STR);
+        $sth->bindValue(':id', $messageId, PDO::PARAM_INT);
+        $sth->execute();
+
+        $mediaGroupId = $sth->fetchColumn();
+
+        if (empty($mediaGroupId)) {
+            return [$messageId];
+        }
+
+        $sql = "SELECT `id` FROM `message` WHERE `chat_id` = :chat_id AND `media_group_id` = :mgid ORDER BY `id`";
+        $sth = $pdo->prepare($sql);
+        $sth->bindValue(':chat_id', $chatId, PDO::PARAM_STR);
+        $sth->bindValue(':mgid', $mediaGroupId, PDO::PARAM_STR);
+        $sth->execute();
+
+        $ids = $sth->fetchAll(PDO::FETCH_COLUMN);
+
+        return !empty($ids) ? array_map('intval', $ids) : [$messageId];
     }
 }
