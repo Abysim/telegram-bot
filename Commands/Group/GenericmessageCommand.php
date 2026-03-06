@@ -194,6 +194,10 @@ class GenericmessageCommand extends SystemCommand
                 $adminIds = is_array($config['admin_id']) ? $config['admin_id'] : [$config['admin_id']];
 
                 foreach ($adminIds as $adminId) {
+                    if ($message->getForwardFrom() || $message->getForwardFromChat() || $message->getChat()->isChannel()) {
+                        continue;
+                    }
+
                     if (!empty($message->getText())) {
                         Request::sendMessage(['chat_id' => $config['admin_id'], 'text' => '#Нове повідомлення з ' . $config['name'] . ':']);
                     }
