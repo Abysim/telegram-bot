@@ -6,8 +6,8 @@
 
 // Your command(s) to run, pass them just like in a message (arguments supported)
 $commands = [
-    '/customcleanup',
     '/dailytoppost',
+    '/customcleanup',
 ];
 
 // Load composer
