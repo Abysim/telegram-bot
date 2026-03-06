@@ -131,6 +131,13 @@ class DailytoppostCommand extends AdminCommand
                   AND created_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
                 GROUP BY message_id
             ) latest ON mrc.id = latest.max_id
+            WHERE EXISTS (
+                SELECT 1
+                FROM `message` m
+                WHERE m.chat_id = :chat_id
+                  AND m.message_id = mrc.message_id
+                  AND m.date >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 24 HOUR)
+            )
         ";
 
         $sth = $pdo->prepare($sql);
