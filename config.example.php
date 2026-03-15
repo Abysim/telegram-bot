@@ -61,6 +61,22 @@ return [
                         'admin_id' => '', // admins chat ID
                     ],
                 ],
+                'banned_channels' => [
+                    'chats' => [
+                        ''/*chat_id*/, // chats where forwarded channel filtering is active
+                    ],
+                    'names' => [
+                        '', // substrings to match against forwarded channel titles
+                    ],
+                ],
+                'banned_stickers' => [
+                    'chats' => [
+                        ''/*chat_id*/, // chats where sticker filtering is active
+                    ],
+                    'names' => [
+                        '', // substrings to match against sticker set names (case-sensitive)
+                    ],
+                ],
             ],
             'chat' => ['chat_id' => ''],
             'fishing' => require __DIR__ . '/fishing_config.php',

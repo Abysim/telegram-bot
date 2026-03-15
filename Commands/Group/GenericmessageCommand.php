@@ -63,9 +63,24 @@ class GenericmessageCommand extends SystemCommand
         $forwardedChat = $message->getForwardFromChat();
         if ($forwardedChat) {
             $bannedChannels = $this->getConfig('banned_channels');
-            if (in_array($message->getChat()->getId(), $bannedChannels['chats'])) {
+            if ($bannedChannels && in_array($message->getChat()->getId(), $bannedChannels['chats'])) {
                 foreach ($bannedChannels['names'] as $bannedChannel) {
                     if (strpos($forwardedChat->getTitle(), $bannedChannel) !== false) {
+                        return Request::deleteMessage([
+                            'chat_id' => $message->getChat()->getId(),
+                            'message_id' => $message->getMessageId(),
+                        ]);
+                    }
+                }
+            }
+        }
+
+        $sticker = $message->getSticker();
+        if ($sticker && $sticker->getSetName()) {
+            $bannedStickers = $this->getConfig('banned_stickers');
+            if ($bannedStickers && in_array($message->getChat()->getId(), $bannedStickers['chats'])) {
+                foreach ($bannedStickers['names'] as $bannedStickerPack) {
+                    if (strpos($sticker->getSetName(), $bannedStickerPack) !== false) {
                         return Request::deleteMessage([
                             'chat_id' => $message->getChat()->getId(),
                             'message_id' => $message->getMessageId(),
