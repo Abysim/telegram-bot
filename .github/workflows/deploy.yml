@@ -31,18 +31,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy via SCP and SSH
-        uses: appleboy/ssh-action@v1
-        env:
-          DEPLOY_PATH: ~/web/bot.abysim.com/public_html
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Install production dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Upload files via SCP
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
-          envs: DEPLOY_PATH
-          script: |
-            cd $DEPLOY_PATH
-            git fetch origin master
-            git reset --hard origin/master
-            php composer.phar install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+          source: "Commands/,vendor/,*.php,*.xml.dist,composer.json"
+          target: ${{ secrets.DEPLOY_PATH }}
+          overwrite: true
