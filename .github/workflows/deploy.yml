@@ -31,24 +31,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy via rsync over SSH
-        uses: burnett01/rsync-deployments@7.0.1
-        with:
-          switches: -avz --delete --exclude-from='.rsync-exclude'
-          path: ./
-          remote_path: ~/web/bot.abysim.com/public_html/
-          remote_host: ${{ secrets.SSH_HOST }}
-          remote_user: ${{ secrets.SSH_USER }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-          remote_port: ${{ secrets.SSH_PORT || 22 }}
-
-      - name: Install composer dependencies on server
+      - name: Deploy via SCP and SSH
         uses: appleboy/ssh-action@v1
+        env:
+          DEPLOY_PATH: ~/web/bot.abysim.com/public_html
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: DEPLOY_PATH
           script: |
-            cd ~/web/bot.abysim.com/public_html
+            cd $DEPLOY_PATH
+            git fetch origin master
+            git reset --hard origin/master
             php composer.phar install --no-dev --no-interaction --prefer-dist --optimize-autoloader
