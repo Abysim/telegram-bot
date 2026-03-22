@@ -18,7 +18,6 @@
 
 namespace Longman\TelegramBot\Commands\AdminCommands;
 
-use http\Env\Response;
 use Longman\TelegramBot\Commands\AdminCommand;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Exception\TelegramException;

@@ -117,5 +117,6 @@ class ECommand extends AdminCommand
             $sth->execute($inParams);
         }
 
+        return Request::emptyResponse();
     }
 }
