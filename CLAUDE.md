@@ -84,7 +84,9 @@ Schema files: `fishing_structure.sql`, `chatter_structure.sql`.
 - **Server**: `ssh vps-web` → `~/web/bot.abysim.com/public_html`
 - **Logs**: `~/web/bot.abysim.com/private/logs/php-telegram-bot-{debug,error}.log` (debug log disabled by default)
 - **Deploy files**: `scp <file> vps-web:~/web/bot.abysim.com/public_html/<file>` — **never deploy without explicit user approval**
-- **Local PHP 8.2 is available via `p` alias** (default `php` is 7.2) — use `p` for local lint/phpcs
+- **Local PHP 8.4 is available via `p` alias** (default `php` is 7.2) — use `p` for local lint/phpcs
+- **Production runs PHP 8.4** (both FPM and CLI) — `error_reporting` excludes `E_DEPRECATED`
+- **NEVER execute production code** (hook.php, cron.php, exe.php, getUpdatesCLI.php) via SSH — use only static analysis (`php -l`, grep, reading logs). Running entry points triggers real bot actions.
 - **MySQL is on external shared hosting** (not localhost) — connection config in `config.php`
 - DB migrations: `vendor/longman/telegram-bot/utils/db-schema-update/`
 - **Query live DB**: `ssh vps-web` then `mysql` CLI (credentials in `config.php` on server)
@@ -105,6 +107,7 @@ Schema files: `fishing_structure.sql`, `chatter_structure.sql`.
 - Telegram sends `message_reaction` (per-user) for groups with visible reaction authors, and `message_reaction_count` (anonymous aggregate) for groups with hidden authors — code must handle both
 - DB column names differ across tables (e.g., `message.id` vs `message_reaction.message_id` referencing the same value) — always verify column names from `structure.sql`, migrations, or live DB before writing SQL
 - DB is only accessible from the production server (IP-restricted) — use `ssh vps-web` then `mysql` CLI to inspect live data
+- `longman/telegram-bot` 0.83.x emits implicit nullable parameter deprecations on PHP 8.4 (`TelegramLog::initialize`, `DB::getTelegramRequestCount`) — suppressed by `error_reporting` in prod, no fix available upstream
 
 ## Key Patterns
 - Commands return `ServerResponse` from `execute()`
