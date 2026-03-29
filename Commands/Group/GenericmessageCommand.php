@@ -364,7 +364,7 @@ class GenericmessageCommand extends SystemCommand
                             }
                         }
                     }
-                } catch (Exception $e) {
+                } catch (\Throwable $e) {
                     TelegramLog::error($e->getMessage());
                 }
             }
