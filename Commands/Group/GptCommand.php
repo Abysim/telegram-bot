@@ -120,7 +120,7 @@ class GptCommand extends CustomSystemCommand
 
                         $length += strlen($content);
 
-                        if ($length > 88888) {
+                        if ($length > 333333) {
                             break;
                         }
 
