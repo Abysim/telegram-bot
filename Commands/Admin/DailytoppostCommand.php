@@ -24,6 +24,20 @@ use PDOException;
 
 class DailytoppostCommand extends AdminCommand
 {
+    private const NEGATIVE_EMOJIS = [
+        "\u{1F44E}", // 👎 thumbs down
+        "\u{1F92E}", // 🤮 puking
+        "\u{1F622}", // 😢 crying
+        "\u{1F62D}", // 😭 loudly crying
+        "\u{1F92C}", // 🤬 cursing
+        "\u{1F4A9}", // 💩 shit
+        "\u{1F921}", // 🤡 clown
+        "\u{1F595}", // 🖕 middle finger
+        "\u{1F48A}", // 💊 pill
+        "\u{1F621}", // 😡 angry
+        "\u{1F631}", // 😱 scared
+    ];
+
     /**
      * @var string
      */
@@ -172,6 +186,9 @@ class DailytoppostCommand extends AdminCommand
 
             $total = 0;
             foreach ($reactions as $reaction) {
+                if (isset($reaction['emoji']) && in_array($reaction['emoji'], self::NEGATIVE_EMOJIS, true)) {
+                    continue;
+                }
                 $total += $reaction['total_count'] ?? 0;
             }
 
@@ -233,14 +250,19 @@ class DailytoppostCommand extends AdminCommand
             }
 
             $messageId = $row['message_id'];
-            $totals[$messageId] = ($totals[$messageId] ?? 0) + count($reactions);
 
             $positiveCount = 0;
+            $reactionCount = 0;
             foreach ($reactions as $reaction) {
+                if (isset($reaction['emoji']) && in_array($reaction['emoji'], self::NEGATIVE_EMOJIS, true)) {
+                    continue;
+                }
+                $reactionCount++;
                 if (isset($reaction['emoji']) && in_array($reaction['emoji'], $positiveEmojis, true)) {
                     $positiveCount++;
                 }
             }
+            $totals[$messageId] = ($totals[$messageId] ?? 0) + $reactionCount;
             $positives[$messageId] = ($positives[$messageId] ?? 0) + $positiveCount;
         }
 
