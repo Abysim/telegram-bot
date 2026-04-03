@@ -3,6 +3,7 @@ composer.lock
 config.php
 fishing_config.php
 chatter_config.php
+report_config.php
 vendor
 temp
 /index.html

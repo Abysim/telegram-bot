@@ -125,6 +125,17 @@ return [
                 ]
             ],
 
+            'report' => [
+                'key' => '', // OpenAI API key
+                'threshold' => 90, // Default confidence threshold (0-100)
+                // 'prompt' => '', // Optional custom system prompt (uses default if empty)
+                ''/*chat_id*/ => [
+                    'admin_id' => '', // Admin chat ID or array of IDs for notifications
+                    'rules' => '', // Numbered rules text, e.g. "1. No spam\n2. No politics"
+                    // 'threshold' => 90, // Optional per-chat threshold override
+                    // 'prompt' => '', // Optional per-chat prompt override
+                ],
+            ],
             'customcleanup' => [
                 'tables_to_clean' => [
                     'callback_query',
