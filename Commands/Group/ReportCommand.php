@@ -9,6 +9,7 @@
 namespace Longman\TelegramBot\Commands\UserCommands;
 
 use Longman\TelegramBot\Commands\SystemCommands\CustomSystemCommand;
+use Longman\TelegramBot\DB;
 use Longman\TelegramBot\Entities\ServerResponse;
 use Longman\TelegramBot\Exception\TelegramException;
 use Longman\TelegramBot\Request;
@@ -81,6 +82,29 @@ PROMPT;
         $reportedMessage = $message->getReplyToMessage();
         if ($reportedMessage === null) {
             return Request::emptyResponse();
+        }
+
+        // Rate limit: max 2 reports per user per 5 minutes
+        $fromUser = $message->getFrom();
+        if ($fromUser !== null) {
+            $pdo = DB::getPdo();
+            $sth = $pdo->prepare('
+                SELECT COUNT(*) FROM `message`
+                WHERE `chat_id` = :chat_id
+                  AND `user_id` = :user_id
+                  AND `id` != :current_id
+                  AND `text` LIKE \'/report%\'
+                  AND `date` > :cutoff
+            ');
+            $sth->execute([
+                ':chat_id' => $chatId,
+                ':user_id' => $fromUser->getId(),
+                ':current_id' => $message->getMessageId(),
+                ':cutoff' => date('Y-m-d H:i:s', time() - 300),
+            ]);
+            if ($sth->fetchColumn() >= 2) {
+                return Request::emptyResponse();
+            }
         }
 
         $chatConfig = $config[$chatId];
