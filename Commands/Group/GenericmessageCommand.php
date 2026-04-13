@@ -372,7 +372,7 @@ class GenericmessageCommand extends SystemCommand
                         }
                     }
                 } catch (\Throwable $e) {
-                    TelegramLog::error($e->getMessage());
+                    TelegramLog::error($e->getMessage() . ' [sourceLang=' . ($sourceLang ?? 'null') . ', deeplSourceLang=' . ($deeplSourceLang ?? 'null') . ']');
                 }
             }
         }
