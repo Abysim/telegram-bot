@@ -50,6 +50,9 @@ class GenericmessageCommand extends SystemCommand
      */
     protected $version = '1.0.0';
 
+    private const CLD2_TO_DEEPL_MAP = ['no' => 'nb'];
+    private const DEEPL_SUPPORTED_SOURCES = ['bg','cs','da','de','el','en','es','et','fi','fr','hu','id','it','ja','ko','lt','lv','nb','nl','pl','pt','ro','ru','sk','sl','sv','tr','uk','zh'];
+
     /**
      * Main command execution
      *
@@ -267,6 +270,7 @@ class GenericmessageCommand extends SystemCommand
                 try {
                     $translate = false;
                     $sourceLang = null;
+                    $deeplSourceLang = null;
                     $cld2 = new CLD2Detector();
                     $cld2score = $cld2->detect($text);
                     if (in_array($message->getChat()->getId(), $translateConfig['debug']) && mb_substr($message->getReplyToMessage()->getText(), 0, 5) != 'GPT: ') {
@@ -333,10 +337,8 @@ class GenericmessageCommand extends SystemCommand
                     }
 
                     if ($translate) {
-                        $langMap = ['no' => 'nb'];
-                        $deeplSupportedSources = ['bg','cs','da','de','el','en','es','et','fi','fr','hu','id','it','ja','ko','lt','lv','nb','nl','pl','pt','ro','ru','sk','sl','sv','tr','uk','zh'];
-                        $deeplSourceLang = $langMap[$sourceLang] ?? $sourceLang;
-                        if (!in_array($deeplSourceLang, $deeplSupportedSources)) {
+                        $deeplSourceLang = self::CLD2_TO_DEEPL_MAP[$sourceLang] ?? $sourceLang;
+                        if (!in_array($deeplSourceLang, self::DEEPL_SUPPORTED_SOURCES)) {
                             $deeplSourceLang = null;
                         }
 
