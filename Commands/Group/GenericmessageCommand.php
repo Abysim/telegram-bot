@@ -308,6 +308,7 @@ class GenericmessageCommand extends SystemCommand
                             $sourceLang = $languages[0]['LanguageCode'] ?? 'uk';
                             $translate = $sourceLang != 'uk';
                         } catch (Exception $e) {
+                            TelegramLog::error('Comprehend fallback: ' . $e->getMessage() . ' [cld2=' . $cld2score['language_code'] . '/' . $cld2score['language_probability'] . ']');
                             $detector = new LanguageDetector(null, ['uk', 'ru']);
                             $scores = $detector->evaluate($text)->getScores();
                             if (in_array($message->getChat()->getId(), $translateConfig['debug']) && mb_substr($message->getReplyToMessage()->getText(), 0, 5) != 'GPT: ') {
@@ -318,8 +319,13 @@ class GenericmessageCommand extends SystemCommand
                                 ]);
                             }
 
-                            $translate = $scores['ru'] - $scores['uk'] > 0.02 && $scores['ru'] > 0.1;
-                            $sourceLang = 'ru';
+                            if ($scores['ru'] - $scores['uk'] > 0.02 && $scores['ru'] > 0.1) {
+                                $translate = true;
+                                $sourceLang = 'ru';
+                            } elseif ($cld2score['language_code'] != 'un' && $cld2score['language_code'] != 'uk') {
+                                $translate = true;
+                                $sourceLang = $cld2score['language_code'];
+                            }
                         }
                     } elseif ($cld2score['language_code'] != 'uk') {
                         $translate = true;
