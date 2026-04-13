@@ -328,11 +328,15 @@ class GenericmessageCommand extends SystemCommand
 
                     if ($translate) {
                         $langMap = ['no' => 'nb'];
-                        $sourceLang = $langMap[$sourceLang] ?? $sourceLang;
+                        $deeplSupportedSources = ['bg','cs','da','de','el','en','es','et','fi','fr','hu','id','it','ja','ko','lt','lv','nb','nl','pl','pt','ro','ru','sk','sl','sv','tr','uk','zh'];
+                        $deeplSourceLang = $langMap[$sourceLang] ?? $sourceLang;
+                        if (!in_array($deeplSourceLang, $deeplSupportedSources)) {
+                            $deeplSourceLang = null;
+                        }
 
                         $translator = new Translator($translateConfig['key']);
 
-                        $result = $translator->translateText($text, $sourceLang, 'uk');
+                        $result = $translator->translateText($text, $deeplSourceLang, 'uk');
                         $percent = 0;
                         $charsText = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($text));
                         $charsResult = preg_replace("/[^а-яієїґё]+/u", "", mb_strtolower($result));
