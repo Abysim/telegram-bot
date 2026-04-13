@@ -327,6 +327,9 @@ class GenericmessageCommand extends SystemCommand
                     }
 
                     if ($translate) {
+                        $langMap = ['no' => 'nb'];
+                        $sourceLang = $langMap[$sourceLang] ?? $sourceLang;
+
                         $translator = new Translator($translateConfig['key']);
 
                         $result = $translator->translateText($text, $sourceLang, 'uk');
