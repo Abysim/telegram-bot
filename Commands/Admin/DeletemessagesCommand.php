@@ -77,15 +77,25 @@ class DeletemessagesCommand extends AdminCommand
             $sth->execute();
             $result = $sth->fetchAll(PDO::FETCH_ASSOC);
             if (isset($result[0])) {
+                TelegramLog::error(
+                    'deletemessages skipped: reply found in chat ' . $args[1]
+                    . ' for batch [' . $ids . '], blocking id=' . $result[0]['id']
+                );
                 return Request::emptyResponse();
             }
         }
 
         foreach ($messageIds as $messageId) {
-            Request::deleteMessage([
+            $response = Request::deleteMessage([
                 'chat_id' => $args[1],
                 'message_id' => $messageId,
             ]);
+            if (!$response->isOk()) {
+                TelegramLog::error(
+                    'deleteMessage failed: chat=' . $args[1] . ' id=' . $messageId
+                    . ' code=' . $response->getErrorCode() . ' desc=' . $response->getDescription()
+                );
+            }
         }
 
         return Request::emptyResponse();

@@ -230,10 +230,23 @@ class GenericmessageCommand extends SystemCommand
             }
 
 
-            return is_array($config['admin_id']) ? Request::emptyResponse() : Request::deleteMessage([
+            if (is_array($config['admin_id'])) {
+                return Request::emptyResponse();
+            }
+
+            $deleteResponse = Request::deleteMessage([
                 'chat_id' => $message->getChat()->getId(),
                 'message_id' => $message->getMessageId(),
             ]);
+            if (!$deleteResponse->isOk()) {
+                TelegramLog::error(
+                    'proxy deleteMessage failed: chat=' . $message->getChat()->getId()
+                    . ' id=' . $message->getMessageId()
+                    . ' code=' . $deleteResponse->getErrorCode()
+                    . ' desc=' . $deleteResponse->getDescription()
+                );
+            }
+            return $deleteResponse;
         }
 
         // Handle new chat members
