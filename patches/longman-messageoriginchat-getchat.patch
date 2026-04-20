@@ -1,0 +1,18 @@
+Fix MessageOriginChat::getChat() returning null.
+
+The entity registers sub-entity under key "sender_chat" but the PHPDoc
+(and Longman's DB::insertMessageRequest) expects getChat() to return the
+sender chat. Provide an explicit getChat() alias.
+
+--- a/src/Entities/MessageOrigin/MessageOriginChat.php
++++ b/src/Entities/MessageOrigin/MessageOriginChat.php
+@@ -22,4 +22,9 @@ class MessageOriginChat extends Entity implements MessageOrigin
+             'sender_chat' => Chat::class,
+         ];
+     }
++
++    public function getChat(): ?Chat
++    {
++        return $this->getSenderChat();
++    }
+ }

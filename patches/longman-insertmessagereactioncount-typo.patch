@@ -1,0 +1,17 @@
+Fix undefined-variable typo in DB::insertMessageReactionCount().
+
+The method parameter is $message_reaction_count but the code referenced
+a non-existent $message_reaction, causing a fatal error for every
+message_reaction_count update.
+
+--- a/src/DB.php
++++ b/src/DB.php
+@@ -711,7 +711,7 @@ class DB
+             $date    = self::getTimestamp($message_reaction_count->getDate());
+             $chat_id = null;
+
+-            if ($chat = $message_reaction->getChat()) {
++            if ($chat = $message_reaction_count->getChat()) {
+                 $chat_id = $chat->getId();
+                 self::insertChat($chat, $date);
+             }
