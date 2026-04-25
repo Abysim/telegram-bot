@@ -36,6 +36,7 @@ class DailytoppostCommand extends AdminCommand
         "\u{1F48A}", // 💊 pill
         "\u{1F621}", // 😡 angry
         "\u{1F631}", // 😱 scared
+        "\u{1F5FF}", // 🗿 moai
     ];
 
     /**
