@@ -238,7 +238,23 @@ class DailytoppostCommand extends AdminCommand
             return null;
         }
 
-        $positiveEmojis = ["\u{1F44D}", "\u{2764}", "\u{2764}\u{200D}\u{1F525}", "\u{1F970}", "\u{1F60D}"];
+        $positiveEmojis = [
+            "\u{1F44D}", // 👍 thumbs up
+            "\u{2764}", // ❤ heart
+            "\u{2764}\u{200D}\u{1F525}", // ❤‍🔥 heart on fire
+            "\u{1F970}", // 🥰 smiling face with hearts
+            "\u{1F60D}", // 😍 heart eyes
+            "\u{1F525}", // 🔥 fire
+            "\u{1F601}", // 😁 beaming face
+            "\u{1F389}", // 🎉 party popper
+            "\u{1F929}", // 🤩 star-struck
+            "\u{1F44F}", // 👏 clapping hands
+            "\u{1F4AF}", // 💯 hundred points
+            "\u{1F3C6}", // 🏆 trophy
+            "\u{1F618}", // 😘 blowing a kiss
+            "\u{1F498}", // 💘 heart with arrow
+            "\u{1F917}", // 🤗 hugging face
+        ];
 
         $totals = [];
         $positives = [];
